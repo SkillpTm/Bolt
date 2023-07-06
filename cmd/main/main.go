@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"io/fs"
+	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,34 +10,62 @@ import (
 var fileSystem = map[string]interface{}{}
 
 func main() {
-	path := "./"
+	path := []string{"./"}
 
-	rec_read_entry(path, nil)
+	recReadEntry(path)
 
-	for key, value := range fileSystem {
-		fmt.Printf("%s: %v\n", key, value)
-	}
-}
-
-func rec_read_entry(path string, entry fs.DirEntry) {
-	entries, err := os.ReadDir(path)
+	jsonData, err := json.MarshalIndent(fileSystem, "", "	")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	file, err := os.Create("./bin/fileSystem.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer file.Close()
+
+	_, err = file.Write(jsonData)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func recReadEntry(path []string) {
+	entries, err := os.ReadDir(filepath.Join(path...))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	currentMap := fileSystem
+
+	for _, folder := range path {
+		if nextMap, ok := currentMap[folder].(map[string]interface{}); ok {
+			currentMap = nextMap
+		} else {
+			currentMap[folder] = map[string]interface{}{}
+			currentMap = currentMap[folder].(map[string]interface{})
+		}
+	}
+
 	for _, entry := range entries {
-		entryPath := filepath.Join(path, entry.Name())
 
 		if entry.IsDir() {
-			rec_read_entry(entryPath, entry)
+			path = append(path, entry.Name())
+
+			recReadEntry(path)
+
+			path = path[:len(path)-1]
 
 		} else {
-			entryInfo, err := os.Stat(entryPath)
+			filePath := filepath.Join(path...) + "\\" + entry.Name()
+			fileInfo, err := os.Stat(filePath)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			fileSystem[entryPath] = entryInfo.Size()
+			currentMap[entry.Name()] = fileInfo.Size()
 		}
 	}
 }

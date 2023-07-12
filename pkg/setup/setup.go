@@ -5,7 +5,7 @@ package setup
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -26,7 +26,8 @@ func Setup(path []string) {
 func recReadPath(path []string) {
 	entries, err := os.ReadDir(filepath.Join(path...))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error reading directory:", err)
+		return
 	}
 
 	currentMap := fileSystem
@@ -53,7 +54,7 @@ func recReadPath(path []string) {
 			filePath := filepath.Join(path...) + "\\" + entry.Name()
 			fileInfo, err := os.Stat(filePath)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println("Error getting file info:", err)
 			}
 
 			currentMap[entry.Name()] = fileInfo.Size()
@@ -66,18 +67,21 @@ func recReadPath(path []string) {
 func createCache() {
 	jsonData, err := json.MarshalIndent(fileSystem, "", "	")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error generating json data:", err)
+		return
 	}
 
 	file, err := os.Create("./bin/fileSystem.json")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error creating json file:", err)
+		return
 	}
 
 	defer file.Close()
 
 	_, err = file.Write(jsonData)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error writing json file:", err)
+		return
 	}
 }

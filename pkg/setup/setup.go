@@ -55,6 +55,7 @@ func recReadPath(path []string) {
 			fileInfo, err := os.Stat(filePath)
 			if err != nil {
 				fmt.Println("Error getting file info:", err)
+				continue
 			}
 
 			currentMap[entry.Name()] = fileInfo.Size()

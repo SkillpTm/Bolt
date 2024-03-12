@@ -20,5 +20,8 @@
 # Go workspace file
 go.work
 
+build/bin
+node_modules
+frontend/dist
+
 *.code-workspace
-fileSystem.json

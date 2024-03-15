@@ -25,4 +25,3 @@ node_modules
 frontend/dist
 
 *.code-workspace
-frontend/wailsjs

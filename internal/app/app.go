@@ -6,7 +6,7 @@ package app
 import (
 	"context"
 
-	"github.com/skillptm/ModSearch/internal/searchhandler"
+	"github.com/skillptm/Quick-Search/internal/searchhandler"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

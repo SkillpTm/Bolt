@@ -10,8 +10,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 
-	"github.com/skillptm/ModSearch/internal/app"
-	"github.com/skillptm/ModSearch/internal/appmenu"
+	"github.com/skillptm/Quick-Search/internal/app"
+	"github.com/skillptm/Quick-Search/internal/appmenu"
 )
 
 // <---------------------------------------------------------------------------------------------------->
@@ -28,7 +28,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:             "ModSearch",
+		Title:             "Quick-Search",
 		Width:             571,
 		Height:            46,
 		DisableResize:     true,

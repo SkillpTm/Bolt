@@ -8,7 +8,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/skillptm/ModSearch/internal/app"
+	"github.com/skillptm/Quick-Search/internal/app"
 )
 
 // <---------------------------------------------------------------------------------------------------->

@@ -1,4 +1,4 @@
-module github.com/skillptm/ModSearch
+module github.com/skillptm/Quick-Search
 
 go 1.22.0
 

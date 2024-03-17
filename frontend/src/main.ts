@@ -1,4 +1,4 @@
-import "./style.css";
+import "./assets/styles/main.css";
 
 import {LaunchSearch} from "../wailsjs/go/app/App";
 import {EventsOn} from "../wailsjs/runtime/runtime";

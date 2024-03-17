@@ -38,6 +38,7 @@ func (a *App) Startup(CTX context.Context) {
 // LaunchSearch starts a search on the SearchHandler of the app
 func (a *App) LaunchSearch(input string) {
 	if len(input) < 1 {
+		a.SearchHandler.ResultsChan <- []string{}
 		return
 	}
 

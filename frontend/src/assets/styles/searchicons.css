@@ -1,11 +1,8 @@
 /* loading icon taken and minified from: https://loading.io/css/ */
 #loading-icon {
-    margin-top: 7px;
-    margin-bottom: 6px;
-    margin-left: 7px;
-    margin-right: 6px;
     width: 32px;
     height: 32px;
+    margin: 6px;
 }
 
 .loading-grid {

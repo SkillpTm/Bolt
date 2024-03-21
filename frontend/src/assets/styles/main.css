@@ -5,48 +5,55 @@
 }
 
 body {
+    margin: 0px;
+
+    font-family: Arial, sans-serif;
     background-color: var(--dark-gray);
-    margin: 0;
 }
 
 /* <----------------------------------------------------------------------------------------------------> */
 
+/* the nav bar takes 570x44 */
 #nav-bar {
     display: flex;
-    float: left;
-    height: 45px;
-    justify-content: center;
-    justify-items: center;
-    width: 571px;
+
+    width: 570px;
+    height: 44px;
 }
 
+/* the magnifying glass takes 44x44 */
 #magnifying-glass {
-    margin: 15px;
-    margin-left: 14px;
-    margin-bottom: 14px;
+    margin: 6px;
 }
 
+/* the search bar takes 482x44 */
 #search-bar {
-    background-color: var(--dark-gray);
     border: none;
     box-sizing: border-box;
-    color: var(--light-gray);
-    font-size: 15px;
-    height: 45px;
     outline: none;
-    padding: 0;
-    width: 479px;
+
+    width: 482px;
+    height: 44px;
+    padding: 0px;
+    padding-top: 1px;
+
+    font-size: 16px;
+    color: var(--light-gray);
+    background-color: var(--dark-gray);
 }
 
 #search-bar::placeholder {
     color: var(--gray);
 }
 
+/* the main seperator takes 570x1 */
 #seperator {
-    background-color: var(--gray);
     display: flex;
+
+    width: 566px;
     height: 1px;
-    margin-left: 2px;
     margin-right: 2px;
-    width: 567px;
+    margin-left: 2px;
+
+    background-color: var(--gray);
 }

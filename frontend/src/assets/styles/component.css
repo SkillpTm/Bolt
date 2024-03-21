@@ -1,0 +1,62 @@
+/* one component takes 570x40 */
+.showComp {
+    display: flex;
+
+    width: 570px;
+    height: 40px;
+}
+
+.hideComp {
+    display: none;
+}
+
+/* the component image takes 44x40 */
+.compImg {
+    margin: 4px;
+    margin-right: 6px;
+    margin-left: 6px;
+}
+
+/* the component text takes 525x40 */
+.compText {
+    display: flex;
+
+    max-width: 525px;
+    width: 525px;
+    height: 20px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+
+    font-size: 16px;
+}
+
+/* the component name takes max 300x40 */
+.compName {
+    max-width: 300px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    color: var(--light-gray);
+}
+
+/* the component seperator takes max 25x40 */
+.compSep {
+    width: 1px;
+    height: 16px;
+    margin-right: 12px;
+    margin-left: 12px;
+
+    background-color: var(--gray);
+}
+
+/* the component value takes max 200x40 */
+.compValue {
+    max-width: 200px;
+    margin-right: 12px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    color: var(--gray);
+}

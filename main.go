@@ -29,8 +29,8 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:             "Quick-Search",
-		Width:             571,
-		Height:            46,
+		Width:             570,
+		Height:            45,
 		DisableResize:     true,
 		Frameless:         true,
 		HideWindowOnClose: true,

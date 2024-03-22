@@ -36,6 +36,8 @@
 
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
 
     color: var(--light-gray);
 }
@@ -52,11 +54,11 @@
 
 /* the component value takes max 200x40 */
 .compValue {
-    max-width: 200px;
     margin-right: 12px;
 
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 
     color: var(--gray);
 }

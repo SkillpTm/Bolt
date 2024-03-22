@@ -32,6 +32,8 @@ class UIHandler {
     static COMPONENT_SIZE = 40;
 
     searchBar = document.getElementById("search-bar") as HTMLInputElement;
+    #loadingIcon = document.getElementById("loading-icon") as HTMLDivElement;
+    #resultStatus = document.getElementById("result-status") as HTMLImageElement;
 
     components = [] as Array<Component>;
 
@@ -81,5 +83,12 @@ class UIHandler {
         });
         
         return newElement;
+    }
+
+    // startedSearch updates the loading icon
+    startedSearch(): void {
+        this.#resultStatus.src = "";
+
+        this.#loadingIcon.classList.add("loading-grid");
     }
 }

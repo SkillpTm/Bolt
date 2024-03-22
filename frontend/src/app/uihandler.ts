@@ -2,6 +2,10 @@ export {UIHandler};
 
 /* <----------------------------------------------------------------------------------------------------> */
 
+import { WindowSetSize } from "../../wailsjs/runtime/runtime";
+
+/* <----------------------------------------------------------------------------------------------------> */
+
 /*
 A component looks like this in html:
 
@@ -90,5 +94,64 @@ class UIHandler {
         this.#resultStatus.src = "";
 
         this.#loadingIcon.classList.add("loading-grid");
+    }
+
+    // #displayComponents unhides the specified amount of components from top to bottom, if any remain they get hidden. It also resizes the window accordingly
+    #displayComponents(amount: number): void {
+        if (amount > this.components.length) {
+            amount = this.components.length
+        }
+
+        WindowSetSize(570, UIHandler.TOP_BAR_SIZE + (amount * UIHandler.COMPONENT_SIZE));
+
+        for (let index = 0; index < this.components.length; index++) {
+            if (index + 1 <= amount) {
+                this.components[index].self.classList.remove("hideComp");
+                this.components[index].self.classList.add("showComp");
+            } else {
+                this.components[index].self.classList.remove("showComp");
+                this.components[index].self.classList.add("hideComp");
+            }
+            
+        }
+    }
+
+    // reset resets the UI of the application to the original starting point
+    reset(): void {
+        this.#loadingIcon.classList.remove("loading-grid");
+        this.#resultStatus.src = "";
+        this.#displayComponents(0);
+    }
+
+    // displayResults addes the entry names, paths and icons to the components and displays them
+    displayResults(queryLength: number, results: Array<String>): void {
+        this.#loadingIcon.classList.remove("loading-grid");
+
+        if (queryLength === 0) {
+            this.reset();
+        } else {
+            if (results.length > 0) {
+                this.#resultStatus.src = "src/assets/images/tick.png";
+            } else {
+                this.#resultStatus.src = "src/assets/images/cross.png";
+            }
+
+            for (let index = 0; index < results.length && index < 7; index++) {
+                let fs = results[index].split("/");
+    
+                // if the last element is empty, it means our string ended in a slash, indicating it was a folder
+                if (fs[fs.length-1] === "") {
+                    fs.pop();
+                    this.components[index].image.src = "src/assets/images/folder.png";
+                } else {
+                    this.components[index].image.src = "src/assets/images/file.png";
+                }
+    
+                this.components[index].name.textContent = fs.pop() as string;
+                this.components[index].value.textContent = fs.join("/") + "/";
+            }
+
+            this.#displayComponents(results.length);
+        }
     }
 }

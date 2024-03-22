@@ -1,47 +1,46 @@
 import "./assets/styles/main.css";
+import "./assets/styles/searchicons.css";
+import "./assets/styles/component.css";
 
-import {LaunchSearch} from "../wailsjs/go/app/App";
-import {EventsOn} from "../wailsjs/runtime/runtime";
+import { LaunchSearch } from "../wailsjs/go/app/App";
+import { EventsOn } from "../wailsjs/runtime/runtime";
+
+import { StateHandler } from "./app/statehandler";
+import { UIHandler } from "./app/uihandler";
+
+/* <----------------------------------------------------------------------------------------------------> */
+
+const stateHandler = new StateHandler;
+const uiHandler = new UIHandler(7);
+
+/* <----------------------------------------------------------------------------------------------------> */
 
 // disable right click
-document.oncontextmenu = function() {return false;}
-
-const loadingIcon = document.getElementById("loading-icon") as HTMLDivElement;
-const resultStatus = document.getElementById("result-status") as HTMLImageElement;
-const searchBar = document.getElementById("search-bar") as HTMLInputElement;
+document.oncontextmenu = () => {
+    return false;
+}
 
 // focus the searchBar on load
 window.onload = () => {
-    searchBar.focus();
-};
+    uiHandler.searchBar.focus();
+    uiHandler.reset();
+}
 
 // makes sure the searchBar is always clicked
 document.addEventListener("click", () => {
-    searchBar.focus();
+    uiHandler.searchBar.focus();
+
 });
 
 // send the current input to Go to search the file system
-searchBar.addEventListener("input", () => {
-    resultStatus.src = "";
-    loadingIcon.classList.add("loading-grid");
-    LaunchSearch(searchBar.value);
+uiHandler.searchBar.addEventListener("input", () => {
+    stateHandler.handleSearch(uiHandler);
+    LaunchSearch(uiHandler.searchBar.value);
 });
 
-// when go found results receive them
+// when Go found results receive, handle and display them
 EventsOn("searchResult", (results: string[]) => {
-    loadingIcon.classList.remove("loading-grid");
-
-    if (results.length > 0) {
-        resultStatus.src = "src/assets/images/tick.png";
-    } else {
-        if (searchBar.value.length > 0) {
-            resultStatus.src = "src/assets/images/cross.png";
-        } else {
-            resultStatus.src = "";
-        }
-    }
-
-    console.log(results);
+    stateHandler.handleResult(results, uiHandler);
 });
 
 declare global {

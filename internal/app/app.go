@@ -5,9 +5,13 @@ package app
 
 import (
 	"context"
+	"log"
+	"os/exec"
+	"strings"
 
 	"github.com/skillptm/Quick-Search/internal/searchhandler"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.design/x/hotkey"
 )
 
 // <---------------------------------------------------------------------------------------------------->
@@ -15,6 +19,7 @@ import (
 // App holds all the main data and functions relevant to the front- and backend.
 type App struct {
 	CTX           context.Context
+	hotkey        *hotkey.Hotkey
 	SearchHandler *searchhandler.SearchHandler
 }
 
@@ -33,6 +38,7 @@ It also starts the goroutine for emiting the search results to the frontend.
 func (a *App) Startup(CTX context.Context) {
 	a.CTX = CTX
 	go a.EmitSearchResult()
+	go a.openOnHotKey()
 }
 
 // LaunchSearch starts a search on the SearchHandler of the app
@@ -49,5 +55,24 @@ func (a *App) LaunchSearch(input string) {
 func (a *App) EmitSearchResult() {
 	for result := range a.SearchHandler.ResultsChan {
 		runtime.EventsEmit(a.CTX, "searchResult", result)
+	}
+}
+
+func (a *App) OpenFileExplorer(filepath string) {
+	cmd := exec.Command("explorer", "/select,", strings.ReplaceAll(filepath, "/", "\\"))
+	cmd.Run()
+}
+
+func (a *App) openOnHotKey() {
+	a.hotkey = hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
+	err := a.hotkey.Register()
+	if err != nil {
+		log.Fatalf("main hotkey failed to register: %s", err)
+		return
+	}
+
+	for range a.hotkey.Keydown() {
+		runtime.WindowReload(a.CTX)
+		runtime.WindowShow(a.CTX)
 	}
 }

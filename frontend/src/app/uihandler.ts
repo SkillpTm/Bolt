@@ -41,6 +41,7 @@ class UIHandler {
 
     components = [] as Array<Component>;
     #highlightedComp = 0;
+    page = 0;
 
     // constructor adds as many components to the application as specififed. This will be the max amount for dispalying anything.
     constructor(max: number) {
@@ -96,6 +97,16 @@ class UIHandler {
         this.#resultStatus.src = "";
 
         this.#loadingIcon.classList.add("loading-grid");
+    }
+
+    // getCurrentComp gets you the index of the currently highligthed component relative to the results on the stateHandler
+    getCurrentComp(): number {
+        return this.page * this.components.length + this.#highlightedComp;
+    }
+
+    // getCurrentComp gets you the index of the currently hovered over component relative to the results on the stateHandler
+    getHoverComp(comp: Component): number {
+        return this.page * this.components.length + (parseInt(comp.self.id[9]) -1);
     }
 
     updateHighlightedComp(change: number): void {

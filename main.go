@@ -35,6 +35,7 @@ func main() {
 		Frameless:         true,
 		HideWindowOnClose: true,
 		AlwaysOnTop:       true,
+		StartHidden:       true,
 		Menu:              appmenu.Get(app),
 		AssetServer: &assetserver.Options{
 			Assets: assets,

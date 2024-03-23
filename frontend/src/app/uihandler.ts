@@ -40,10 +40,12 @@ class UIHandler {
     #resultStatus = document.getElementById("result-status") as HTMLImageElement;
 
     components = [] as Array<Component>;
+    #highlightedComp = 0;
 
     // constructor adds as many components to the application as specififed. This will be the max amount for dispalying anything.
     constructor(max: number) {
         this.#generateMaxComponents(max);
+        this.components[0].self.classList.add("highligthed");
     }
 
     // #generateMaxComponents generates interface Components appended to the application
@@ -96,6 +98,20 @@ class UIHandler {
         this.#loadingIcon.classList.add("loading-grid");
     }
 
+    updateHighlightedComp(change: number): void {
+        this.components[this.#highlightedComp].self.classList.remove("highligthed");
+
+        if (change === 0) {
+            this.#highlightedComp = 0;
+        } else if (change < 0) {
+            this.#highlightedComp = (this.#highlightedComp + change + this.components.length) % this.components.length;
+        } else {
+            this.#highlightedComp = (this.#highlightedComp + 1) % this.components.length;
+        }
+
+        this.components[this.#highlightedComp].self.classList.add("highligthed");
+    }
+
     // #displayComponents unhides the specified amount of components from top to bottom, if any remain they get hidden. It also resizes the window accordingly
     #displayComponents(amount: number): void {
         if (amount > this.components.length) {
@@ -111,15 +127,17 @@ class UIHandler {
             } else {
                 this.components[index].self.classList.remove("showComp");
                 this.components[index].self.classList.add("hideComp");
-            }
-            
+            }  
         }
+
+        this.updateHighlightedComp(0);
     }
 
     // reset resets the UI of the application to the original starting point
     reset(): void {
         this.#loadingIcon.classList.remove("loading-grid");
         this.#resultStatus.src = "";
+        this.searchBar.value = "";
         this.#displayComponents(0);
     }
 

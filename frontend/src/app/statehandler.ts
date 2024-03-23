@@ -2,6 +2,9 @@ export {StateHandler}
 
 /* <----------------------------------------------------------------------------------------------------> */
 
+import { OpenFileExplorer } from "../../wailsjs/go/app/App";
+import { WindowHide } from "../../wailsjs/runtime/runtime";
+
 import { UIHandler } from "./uihandler";
 
 /* <----------------------------------------------------------------------------------------------------> */
@@ -31,5 +34,11 @@ class StateHandler {
 
         uiHandler.displayResults(this.#query.length, this.#results);
     }
-}
 
+    // openFile opens the given file and hides the app
+    openFile(uiHandler: UIHandler, fileIndex: number) {
+        WindowHide();
+        uiHandler.reset();
+        OpenFileExplorer(this.#results[fileIndex].replaceAll("/", "\\"));
+    }
+}

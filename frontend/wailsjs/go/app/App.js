@@ -13,7 +13,3 @@ export function LaunchSearch(arg1) {
 export function OpenFileExplorer(arg1) {
   return window['go']['app']['App']['OpenFileExplorer'](arg1);
 }
-
-export function WindowHideOnUnselected() {
-  return window['go']['app']['App']['WindowHideOnUnselected']();
-}

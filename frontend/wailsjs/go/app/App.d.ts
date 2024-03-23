@@ -6,5 +6,3 @@ export function EmitSearchResult():Promise<void>;
 export function LaunchSearch(arg1:string):Promise<void>;
 
 export function OpenFileExplorer(arg1:string):Promise<void>;
-
-export function WindowHideOnUnselected():Promise<void>;

@@ -41,10 +41,12 @@ class UIHandler {
 
     components = [] as Array<Component>;
     #highlightedComp = 0;
+    #maxComponents
     page = 0;
 
     // constructor adds as many components to the application as specififed. This will be the max amount for dispalying anything.
     constructor(max: number) {
+        this.#maxComponents = max;
         this.#generateMaxComponents(max);
         this.components[0].self.classList.add("highligthed");
     }
@@ -165,7 +167,7 @@ class UIHandler {
                 this.#resultStatus.src = "src/assets/images/cross.png";
             }
 
-            for (let index = 0; index < results.length && index < 7; index++) {
+            for (let index = 0; index < results.length && index < this.#maxComponents; index++) {
                 let fs = results[index].split("/");
     
                 // if the last element is empty, it means our string ended in a slash, indicating it was a folder
@@ -180,7 +182,7 @@ class UIHandler {
                 this.components[index].value.textContent = fs.join("/") + "/";
             }
 
-            this.#displayComponents(results.length);
+            this.#displayComponents(this.#maxComponents);
         }
     }
 }

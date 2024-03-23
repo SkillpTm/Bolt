@@ -10,8 +10,10 @@ import { UIHandler } from "./app/uihandler";
 
 /* <----------------------------------------------------------------------------------------------------> */
 
+const maxComponents = 7;
+
 const stateHandler = new StateHandler;
-const uiHandler = new UIHandler(7);
+const uiHandler = new UIHandler(maxComponents);
 
 uiHandler.components.forEach((comp) => {
     comp.self.addEventListener("click", () => {

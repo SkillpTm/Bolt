@@ -13,6 +13,12 @@ import { UIHandler } from "./app/uihandler";
 const stateHandler = new StateHandler;
 const uiHandler = new UIHandler(7);
 
+uiHandler.components.forEach((comp) => {
+    comp.self.addEventListener("click", () => {
+        stateHandler.openFile(uiHandler, uiHandler.getHoverComp(comp));
+    });
+});
+
 /* <----------------------------------------------------------------------------------------------------> */
 
 // disable right click
@@ -23,13 +29,29 @@ document.oncontextmenu = () => {
 // focus the searchBar on load
 window.onload = () => {
     uiHandler.searchBar.focus();
+    uiHandler.searchBar.select();
     uiHandler.reset();
 }
 
 // makes sure the searchBar is always clicked
 document.addEventListener("click", () => {
     uiHandler.searchBar.focus();
+});
 
+EventsOn("hidApp", () => {
+    uiHandler.reset();
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        uiHandler.updateHighlightedComp(1);
+    } else if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        uiHandler.updateHighlightedComp(-1);
+    } else if (event.key === 'Enter') {
+        stateHandler.openFile(uiHandler, uiHandler.getCurrentComp());
+    }
 });
 
 // send the current input to Go to search the file system

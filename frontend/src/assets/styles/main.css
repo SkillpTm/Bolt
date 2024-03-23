@@ -1,11 +1,15 @@
 :root {
     --light-gray: rgb(220, 220, 220);
     --gray: rgb(117, 117, 117);
+    --highlight-gray: rgb(78, 78, 78);
+    --hover-gray: rgb(67, 67, 67);
     --dark-gray: rgb(34, 34, 34);
 }
 
 body {
     margin: 0px;
+
+    user-select: none;
 
     font-family: Arial, sans-serif;
     background-color: var(--dark-gray);

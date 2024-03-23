@@ -4,10 +4,24 @@
 
     width: 570px;
     height: 40px;
+
+    cursor: pointer;
+}
+
+.showComp:hover {
+    background-color: var(--hover-gray);
 }
 
 .hideComp {
     display: none;
+}
+
+.highligthed {
+    background-color: var(--highlight-gray);
+}
+
+.highligthed:hover {
+    background-color: var(--highlight-gray);
 }
 
 /* the component image takes 44x40 */

@@ -94,7 +94,7 @@ func (searchHandler *SearchHandler) StartSearch(input string) {
 		searchHandler.searching = false
 	}
 
-	// set a new break channel, because the last one got closed, if we stopped a search
+	// set a new break channel, to stop confusion on what search to break
 	searchHandler.BreakChan = make(chan bool, 1)
 
 	// launch the search as a gorutine
@@ -103,9 +103,11 @@ func (searchHandler *SearchHandler) StartSearch(input string) {
 		searchHandler.searching = true
 
 		// start the search with the option of breaking it
-		result := bws.GoSearchWithBreak(searchString, fileExtensions, extendedSearch, searchHandler.BreakChan)
+		result, brokenEarly := bws.GoSearchWithBreak(searchString, fileExtensions, extendedSearch, searchHandler.BreakChan)
 
-		// put the results in the results channel so app.EmitSearchResult can emit them to the frontend
-		searchHandler.ResultsChan <- result
+		if !brokenEarly {
+			// put the results in the results channel so app.EmitSearchResult can emit them to the frontend
+			searchHandler.ResultsChan <- result
+		}
 	}()
 }

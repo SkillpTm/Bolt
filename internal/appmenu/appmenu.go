@@ -17,11 +17,8 @@ import (
 func Get(a *app.App) *menu.Menu {
 	AppMenu := menu.NewMenu()
 	FileMenu := AppMenu.AddSubmenu("Shortcuts")
-	FileMenu.AddText("Reload", keys.Combo("s", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
-		runtime.WindowReloadApp(a.CTX)
-	})
 	FileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
-		runtime.Quit(a.CTX)
+		runtime.WindowHide(a.CTX)
 	})
 
 	return AppMenu

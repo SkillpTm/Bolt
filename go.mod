@@ -3,8 +3,10 @@ module github.com/skillptm/Quick-Search
 go 1.22.0
 
 require (
-	github.com/skillptm/bws v0.5.0
+	github.com/skillptm/bws v0.6.1
 	github.com/wailsapp/wails/v2 v2.8.0
+	golang.design/x/hotkey v0.4.1
+	golang.org/x/sys v0.16.0
 )
 
 require (
@@ -34,6 +36,5 @@ require (
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )

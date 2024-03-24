@@ -15,11 +15,17 @@ import (
 
 // Get provides our default menu
 func Get(a *app.App) *menu.Menu {
-	AppMenu := menu.NewMenu()
-	FileMenu := AppMenu.AddSubmenu("Shortcuts")
-	FileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
+	appMenu := menu.NewMenu()
+	subMenu := appMenu.AddSubmenu("Shortcuts")
+	subMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 		runtime.WindowHide(a.CTX)
 	})
+	subMenu.AddText("Quit", keys.CmdOrCtrl("f"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(a.CTX, "pageForward")
+	})
+	subMenu.AddText("Quit", keys.CmdOrCtrl("b"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(a.CTX, "pageBackward")
+	})
 
-	return AppMenu
+	return appMenu
 }

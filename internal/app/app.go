@@ -5,6 +5,9 @@ package app
 
 import (
 	"context"
+	"embed"
+	"encoding/base64"
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
@@ -24,14 +27,34 @@ import (
 type App struct {
 	CTX           context.Context
 	hotkey        *hotkey.Hotkey
+	images        map[string]string
 	SearchHandler *searchhandler.SearchHandler
 }
 
 // NewApp creates a new App struct with all it's values.
-func NewApp() *App {
+func NewApp(images embed.FS) (*App, error) {
+	imagePaths := map[string]string{
+		"cross":  "frontend/src/assets/images/cross.png",
+		"file":   "frontend/src/assets/images/file.png",
+		"folder": "frontend/src/assets/images/folder.png",
+		"tick":   "frontend/src/assets/images/tick.png",
+	}
+
+	imageMap := make(map[string]string)
+
+	for name, path := range imagePaths {
+		imageData, err := images.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't get image %s from embed: %s", path, err.Error())
+		}
+
+		imageMap[name] = "data:image/png;base64," + base64.StdEncoding.EncodeToString(imageData)
+	}
+
 	return &App{
 		SearchHandler: searchhandler.New(),
-	}
+		images:        imageMap,
+	}, nil
 }
 
 /*
@@ -44,6 +67,15 @@ func (a *App) Startup(CTX context.Context) {
 	go a.EmitSearchResult()
 	go a.openOnHotKey()
 	go a.windowHideOnUnselected()
+}
+
+// GetImageData receives a key (being the name of an image) and returns the base64 string data of that image
+func (a *App) GetImageData(name string) string {
+	if data, ok := a.images[name]; ok {
+		return data
+	}
+
+	return ""
 }
 
 // LaunchSearch starts a search on the SearchHandler of the app

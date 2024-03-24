@@ -42,8 +42,8 @@ class UIHandler {
 
     components = [] as Array<Component>;
     #highlightedComp = 0;
-    #maxComponents
-    page = 0;
+    #maxComponents = 0;
+    #page = 0;
 
     // constructor adds as many components to the application as specififed. This will be the max amount for dispalying anything.
     constructor(max: number) {
@@ -104,12 +104,12 @@ class UIHandler {
 
     // getCurrentComp gets you the index of the currently highligthed component relative to the results on the stateHandler
     getCurrentComp(): number {
-        return this.page * this.components.length + this.#highlightedComp;
+        return this.#page * this.#maxComponents + this.#highlightedComp;
     }
 
     // getCurrentComp gets you the index of the currently hovered over component relative to the results on the stateHandler
     getHoverComp(comp: Component): number {
-        return this.page * this.components.length + (parseInt(comp.self.id[9]) -1);
+        return this.#page * this.#maxComponents + (parseInt(comp.self.id[9]) -1);
     }
 
     updateHighlightedComp(change: number): void {
@@ -120,7 +120,7 @@ class UIHandler {
         } else if (change < 0) {
             this.#highlightedComp = (this.#highlightedComp + change + this.components.length) % this.components.length;
         } else {
-            this.#highlightedComp = (this.#highlightedComp + 1) % this.components.length;
+            this.#highlightedComp = (this.#highlightedComp + change) % this.components.length;
         }
 
         this.components[this.#highlightedComp].self.classList.add("highligthed");
@@ -152,7 +152,32 @@ class UIHandler {
         this.#loadingIcon.classList.remove("loading-grid");
         this.#resultStatus.src = "";
         this.searchBar.value = "";
+        this.#page = 0;
         this.#displayComponents(0);
+    }
+
+    /**
+     * Updates the page number. If the change would be invalid (i.e. below 0) nothing changes.
+     *
+     * @param change increase/decrease to page count, 0 resets it back to 0
+     * 
+     * @param resultsLength the length of the results from the StateHandler, used to determine if the change is valid
+     */
+    updatePage(change: number, resultsLength: number): void {
+        if (change === 0) {
+            this.#page = 0;
+            return;
+        }
+
+        if ((this.#page + change) * this.#maxComponents > resultsLength-1) {
+            return;
+        }
+
+        if ((this.#page + change) === 0) {
+            return;
+        }
+
+        this.#page += change;
     }
 
     // displayResults adds the entry names, paths and icons to the components and displays them
@@ -168,22 +193,32 @@ class UIHandler {
                 this.#resultStatus.src = await GetImageData("cross");
             }
 
+            let displayAmount = 0;
+
             for (let index = 0; index < results.length && index < this.#maxComponents; index++) {
-                let fs = results[index].split("/");
+                const currentFile = index + (this.#maxComponents * this.#page);
+
+                if (currentFile > results.length-1) {
+                    break;
+                }
+
+                let filePath = results[currentFile].split("/");
     
                 // if the last element is empty, it means our string ended in a slash, indicating it was a folder
-                if (fs[fs.length-1] === "") {
-                    fs.pop();
+                if (filePath[filePath.length-1] === "") {
+                    filePath.pop();
                     this.components[index].image.src = await GetImageData("folder");
                 } else {
                     this.components[index].image.src = await GetImageData("file");
                 }
     
-                this.components[index].name.textContent = fs.pop() as string;
-                this.components[index].value.textContent = fs.join("/") + "/";
+                this.components[index].name.textContent = filePath.pop() as string;
+                this.components[index].value.textContent = filePath.join("/") + "/";
+
+                displayAmount++;
             }
 
-            this.#displayComponents(results.length);
+            this.#displayComponents(displayAmount);
         }
     }
 }

@@ -29,10 +29,10 @@ class StateHandler {
     }
 
     // handleResult updates the nav-bar and components for the finished search
-    handleResult(newResults: Array<String>, uiHandler: UIHandler): void {
+    async handleResult(newResults: Array<String>, uiHandler: UIHandler): Promise<void> {
         this.#results = newResults;
 
-        uiHandler.displayResults(this.#query.length, this.#results);
+        await uiHandler.displayResults(this.#query.length, this.#results);
     }
 
     // openFile opens the given file and hides the app

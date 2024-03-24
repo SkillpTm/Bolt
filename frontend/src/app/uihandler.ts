@@ -3,6 +3,7 @@ export {UIHandler};
 /* <----------------------------------------------------------------------------------------------------> */
 
 import { WindowSetSize } from "../../wailsjs/runtime/runtime";
+import { GetImageData } from "../../wailsjs/go/app/App";
 
 /* <----------------------------------------------------------------------------------------------------> */
 
@@ -127,8 +128,8 @@ class UIHandler {
 
     // #displayComponents unhides the specified amount of components from top to bottom, if any remain they get hidden. It also resizes the window accordingly
     #displayComponents(amount: number): void {
-        if (amount > this.components.length) {
-            amount = this.components.length
+        if (amount > this.#maxComponents) {
+            amount = this.#maxComponents;
         }
 
         WindowSetSize(570, UIHandler.TOP_BAR_SIZE + (amount * UIHandler.COMPONENT_SIZE));
@@ -154,17 +155,17 @@ class UIHandler {
         this.#displayComponents(0);
     }
 
-    // displayResults addes the entry names, paths and icons to the components and displays them
-    displayResults(queryLength: number, results: Array<String>): void {
+    // displayResults adds the entry names, paths and icons to the components and displays them
+    async displayResults(queryLength: number, results: Array<String>): Promise<void> {
         this.#loadingIcon.classList.remove("loading-grid");
 
         if (queryLength === 0) {
             this.reset();
         } else {
             if (results.length > 0) {
-                this.#resultStatus.src = "src/assets/images/tick.png";
+                this.#resultStatus.src = await GetImageData("tick");
             } else {
-                this.#resultStatus.src = "src/assets/images/cross.png";
+                this.#resultStatus.src = await GetImageData("cross");
             }
 
             for (let index = 0; index < results.length && index < this.#maxComponents; index++) {
@@ -173,16 +174,16 @@ class UIHandler {
                 // if the last element is empty, it means our string ended in a slash, indicating it was a folder
                 if (fs[fs.length-1] === "") {
                     fs.pop();
-                    this.components[index].image.src = "src/assets/images/folder.png";
+                    this.components[index].image.src = await GetImageData("folder");
                 } else {
-                    this.components[index].image.src = "src/assets/images/file.png";
+                    this.components[index].image.src = await GetImageData("file");
                 }
     
                 this.components[index].name.textContent = fs.pop() as string;
                 this.components[index].value.textContent = fs.join("/") + "/";
             }
 
-            this.#displayComponents(this.#maxComponents);
+            this.#displayComponents(results.length);
         }
     }
 }

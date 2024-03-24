@@ -63,8 +63,8 @@ uiHandler.searchBar.addEventListener("input", () => {
 });
 
 // when Go found results receive, handle and display them
-EventsOn("searchResult", (results: string[]) => {
-    stateHandler.handleResult(results, uiHandler);
+EventsOn("searchResult", async (results: string[]) => {
+    await stateHandler.handleResult(results, uiHandler);
 });
 
 declare global {

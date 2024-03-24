@@ -52,8 +52,9 @@ func NewApp(images embed.FS) (*App, error) {
 	}
 
 	return &App{
-		SearchHandler: searchhandler.New(),
+		hotkey:        hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS),
 		images:        imageMap,
+		SearchHandler: searchhandler.New(),
 	}, nil
 }
 
@@ -103,7 +104,6 @@ func (a *App) OpenFileExplorer(filepath string) {
 
 // openOnHotKey will unhide and reload the app when ctrl+shift+s is pressed
 func (a *App) openOnHotKey() {
-	a.hotkey = hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
 	err := a.hotkey.Register()
 	if err != nil {
 		log.Fatalf("main hotkey failed to register: %s", err)

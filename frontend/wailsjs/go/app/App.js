@@ -6,6 +6,10 @@ export function EmitSearchResult() {
   return window['go']['app']['App']['EmitSearchResult']();
 }
 
+export function GetImageData(arg1) {
+  return window['go']['app']['App']['GetImageData'](arg1);
+}
+
 export function LaunchSearch(arg1) {
   return window['go']['app']['App']['LaunchSearch'](arg1);
 }

@@ -57,7 +57,8 @@ document.addEventListener('keydown', (event) => {
 });
 
 // send the current input to Go to search the file system
-uiHandler.searchBar.addEventListener("input", () => {
+uiHandler.searchBar.addEventListener("input", async () => {
+    await stateHandler.updatePage(0, uiHandler);
     stateHandler.handleSearch(uiHandler);
     LaunchSearch(uiHandler.searchBar.value);
 });
@@ -65,6 +66,14 @@ uiHandler.searchBar.addEventListener("input", () => {
 // when Go found results receive, handle and display them
 EventsOn("searchResult", async (results: string[]) => {
     await stateHandler.handleResult(results, uiHandler);
+});
+
+EventsOn("pageForward", async () => {
+    await stateHandler.updatePage(1, uiHandler);
+});
+
+EventsOn("pageBackward", async () => {
+    await stateHandler.updatePage(-1, uiHandler);
 });
 
 declare global {

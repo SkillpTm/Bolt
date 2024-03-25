@@ -42,6 +42,9 @@ body {
     padding: 6px;
 }
 
+.icon-clickable {
+    cursor: pointer;
+}
 
 /* the search bar takes 482x44 */
 #search-bar {

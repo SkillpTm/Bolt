@@ -6,56 +6,47 @@ import { OpenFileExplorer } from "../../wailsjs/go/app/App";
 import { WindowHide } from "../../wailsjs/runtime/runtime";
 
 import { UIHandler } from "../ui/uihandler";
+import { Search } from "../ui/modes/search";
 
 /* <----------------------------------------------------------------------------------------------------> */
 
-// The StateHandler directs the UIHandler to display tur correct state of the application
+/**
+ * Holds the uiHandler and all the UI modes.
+ */
 class StateHandler {
-
-    #query: String;
-    #results: Array<String>;
-
-    // constructor sets zero values for the state parameters
-    constructor() {
-        this.#query = "";
-        this.#results = [];
-    }
-
-    // handleSearch updates the nav-bar for the newly started search
-    handleSearch(uiHandler: UIHandler): void {
-        this.#query = uiHandler.searchBar.value;
-
-        uiHandler.startedSearch();
-    }
-
-    // handleResult updates the nav-bar and components for the finished search
-    async handleResult(newResults: Array<String> | undefined, uiHandler: UIHandler): Promise<void> {
-        if (newResults) {
-            this.#results = newResults;
-        }
-
-        await uiHandler.displayResults(this.#query.length, this.#results);
-    }
+    uiHandler!: UIHandler;
+    search!: Search;
 
     /**
-     * Updates the page number on the given UIHandler. If the change isn't 0 it also executes handleReslut.
+     * Sets the uiHandler as a property and adds the properties: Search.
      *
-     * @param change increase/decrease to page count, 0 resets it back to 0
-     * 
-     * @param uiHandler the handler on which to update the page
+     * @param uiHandler the main uiHandler used throught the app
      */
-    async updatePage(change: number, uiHandler: UIHandler): Promise<void> {
-        uiHandler.updatePage(change, this.#results.length);
+    constructor(uiHandler: UIHandler) {
+        this.uiHandler = uiHandler;
+        this.search = new Search(uiHandler);
 
-        if (change !== 0) {
-            await this.handleResult(undefined, uiHandler);
-        }
+        this.uiHandler.components.forEach((comp) => {
+            comp.self.addEventListener("click", async () => {
+                await this.openFile(this.search.getHoveredFile(comp));
+            });
+        });
+    }
+
+    async reset(): Promise<void> {
+        await this.uiHandler.resetUI();
+        this.search.newResults([] as Array<string>);
     }
 
     // openFile opens the given file and hides the app
-    openFile(uiHandler: UIHandler, fileIndex: number) {
+    /**
+     * Open the given file with a windows file explorer.
+     *
+     * @param filePath the path for the file to be opened
+     */
+    async openFile(filePath: string): Promise<void> {
         WindowHide();
-        uiHandler.reset();
-        OpenFileExplorer(this.#results[fileIndex].replaceAll("/", "\\"));
+        await this.reset();
+        OpenFileExplorer(filePath);
     }
 }

@@ -10,16 +10,7 @@ import { UIHandler } from "./ui/uihandler";
 
 /* <----------------------------------------------------------------------------------------------------> */
 
-const maxComponents = 7;
-
-const stateHandler = new StateHandler;
-const uiHandler = new UIHandler(maxComponents);
-
-uiHandler.components.forEach((comp) => {
-    comp.self.addEventListener("click", () => {
-        stateHandler.openFile(uiHandler, uiHandler.getHoverComp(comp));
-    });
-});
+const stateHandler = new StateHandler(new UIHandler(7));
 
 /* <----------------------------------------------------------------------------------------------------> */
 
@@ -29,55 +20,52 @@ document.oncontextmenu = () => {
 }
 
 // focus the searchBar on load
-window.onload = () => {
-    uiHandler.searchBar.focus();
-    uiHandler.searchBar.select();
-    uiHandler.reset();
+window.onload = async () => {
+    stateHandler.uiHandler.searchBar.focus();
+    stateHandler.uiHandler.searchBar.select();
+    await stateHandler.reset();
 }
 
 // makes sure the searchBar is always clicked
 document.addEventListener("click", () => {
-    uiHandler.searchBar.focus();
+    stateHandler.uiHandler.searchBar.focus();
 });
 
-EventsOn("hidApp", () => {
-    uiHandler.reset();
+// reset the app once it has been hidden
+EventsOn("hidApp", async () => {
+    await stateHandler.reset();
 });
 
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowDown') {
+// move the highlighted section with arrow keys and open afile with enter
+document.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") {
         event.preventDefault()
-        uiHandler.updateHighlightedComp(1);
-    } else if (event.key === 'ArrowUp') {
+        stateHandler.search.updateHighlightedComp(1);
+    } else if (event.key === "ArrowUp") {
         event.preventDefault()
-        uiHandler.updateHighlightedComp(-1);
-    } else if (event.key === 'Enter') {
-        stateHandler.openFile(uiHandler, uiHandler.getCurrentComp());
+        stateHandler.search.updateHighlightedComp(-1);
+    } else if (event.key === "Enter") {
+        stateHandler.openFile(stateHandler.search.getHighlightedFile());
     }
 });
 
 // send the current input to Go to search the file system
-uiHandler.searchBar.addEventListener("input", async () => {
-    await stateHandler.updatePage(0, uiHandler);
-    stateHandler.handleSearch(uiHandler);
-    LaunchSearch(uiHandler.searchBar.value);
+stateHandler.uiHandler.searchBar.addEventListener("input", () => {
+    stateHandler.search.newSearch();
+    LaunchSearch(stateHandler.uiHandler.searchBar.value);
 });
 
 // when Go found results receive, handle and display them
 EventsOn("searchResult", async (results: string[]) => {
-    await stateHandler.handleResult(results, uiHandler);
+    await stateHandler.search.newResults(results);
 });
 
+// change page forwards with shortcut
 EventsOn("pageForward", async () => {
-    await stateHandler.updatePage(1, uiHandler);
+    await stateHandler.search.updatePage(1);
 });
 
+// change page backwards with shortcut
 EventsOn("pageBackward", async () => {
-    await stateHandler.updatePage(-1, uiHandler);
+    await stateHandler.search.updatePage(-1);
 });
-
-declare global {
-    interface Window {
-
-    }
-}

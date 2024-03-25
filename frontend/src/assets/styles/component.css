@@ -12,10 +12,6 @@
     background-color: var(--hover-gray);
 }
 
-.hideComp {
-    display: none;
-}
-
 .highligthed {
     background-color: var(--highlight-gray);
 }

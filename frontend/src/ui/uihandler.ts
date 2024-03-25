@@ -12,7 +12,7 @@ import { GetImageData } from "../../wailsjs/go/app/App";
  * Is in task of doing general work around the components.
  *
  * A component looks like this in html:
- * <div id="component1" class="hideComp">
+ * <div id="component1" class="hide">
  *     <img id="component1-image" class="compImg">
  *     <div id="component1-text" class="compText">
  *         <div id="component1-name" class="compName"></div>
@@ -57,7 +57,7 @@ class UIHandler {
         const body = document.body;
 
         for (let index = 0; index < max; index++) {
-            const newBodyElement = this.#makeElement("div", `component${index+1}`, ["hideComp"]) as HTMLDivElement;
+            const newBodyElement = this.#makeElement("div", `component${index+1}`, ["hide"]) as HTMLDivElement;
             const newSubImage = this.#makeElement("img", `component${index+1}-image`, ["compImg"]) as HTMLImageElement;
             const newTextDiv = this.#makeElement("div", `component${index+1}-text`, ["compText"]) as HTMLDivElement;
             const newNameDiv = this.#makeElement("div", `component${index+1}-name`, ["compName"]) as HTMLDivElement;
@@ -114,6 +114,7 @@ class UIHandler {
         this.searchBar.value = "";
         this.rightSection.classList.remove("loading-grid");
         this.rightIcon.src = "";
+        this.rightIcon.classList.add("hide");
 
         this.displayComponents(0);
     }
@@ -137,11 +138,11 @@ class UIHandler {
             if (index + 1 <= amount) {
                 this.displayedComps++;
 
-                this.components[index].self.classList.remove("hideComp");
+                this.components[index].self.classList.remove("hide");
                 this.components[index].self.classList.add("showComp");
             } else {
                 this.components[index].self.classList.remove("showComp");
-                this.components[index].self.classList.add("hideComp");
+                this.components[index].self.classList.add("hide");
             }  
         }
     }

@@ -50,6 +50,8 @@ class Search {
         this.uiHandler.rightIcon.src = "";
 
         this.uiHandler.rightSection.classList.add("loading-grid");
+        this.uiHandler.rightSection.classList.remove("hide");
+        this.uiHandler.rightIcon.classList.add("hide");
     }
 
     /**
@@ -95,6 +97,8 @@ class Search {
      */
     async displayResults(): Promise<void> {
         this.uiHandler.rightSection.classList.remove("loading-grid");
+        this.uiHandler.rightSection.classList.add("hide");
+        this.uiHandler.rightIcon.classList.remove("hide");
 
         if (this.uiHandler.searchBar.value.length === 0) {
             await this.uiHandler.resetUI();

@@ -135,7 +135,7 @@ func (a *App) windowHideOnUnselected() {
 
 		title := syscall.UTF16ToString(buf)
 
-		if title != "Quick-Search" {
+		if title != "Quick Search" {
 			runtime.WindowHide(a.CTX)
 			runtime.EventsEmit(a.CTX, "hidApp")
 		}

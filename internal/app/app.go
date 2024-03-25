@@ -35,10 +35,15 @@ type App struct {
 // NewApp creates a new App struct with all it's values.
 func NewApp(images embed.FS) (*App, error) {
 	imagePaths := map[string]string{
-		"cross":  "frontend/src/assets/images/cross.png",
-		"file":   "frontend/src/assets/images/file.png",
-		"folder": "frontend/src/assets/images/folder.png",
-		"tick":   "frontend/src/assets/images/tick.png",
+		"cross":            "frontend/src/assets/images/cross.png",
+		"file":             "frontend/src/assets/images/file.png",
+		"folder":           "frontend/src/assets/images/folder.png",
+		"left":             "frontend/src/assets/images/left.png",
+		"magnifying_glass": "frontend/src/assets/images/magnifying_glass.png",
+		"not-left":         "frontend/src/assets/images/not_left.png",
+		"right":            "frontend/src/assets/images/right.png",
+		"not-right":        "frontend/src/assets/images/not_right.png",
+		"tick":             "frontend/src/assets/images/tick.png",
 	}
 
 	imageMap := make(map[string]string)
@@ -94,7 +99,7 @@ func (a *App) LaunchSearch(input string) {
 
 // OpenFileExplorer allows you to open the file explorer at any entry's location
 func (a *App) OpenFileExplorer(filePath string) {
-	cmd := exec.Command("explorer", "/select,", strings.TrimSuffix(strings.ReplaceAll(filePath, "/", "\\"), "\\"))
+	cmd := exec.Command("explorer", "/select,", strings.ReplaceAll(strings.TrimSuffix(filePath, "/"), "/", "\\"))
 	cmd.Run()
 }
 

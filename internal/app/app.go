@@ -97,8 +97,8 @@ func (a *App) EmitSearchResult() {
 }
 
 // OpenFileExplorer allows you to open the file explorer at any entry's location
-func (a *App) OpenFileExplorer(filepath string) {
-	cmd := exec.Command("explorer", "/select,", strings.ReplaceAll(filepath, "/", "\\"))
+func (a *App) OpenFileExplorer(filePath string) {
+	cmd := exec.Command("explorer", "/select,", strings.TrimSuffix(strings.ReplaceAll(filePath, "/", "\\"), "\\"))
 	cmd.Run()
 }
 
@@ -111,7 +111,6 @@ func (a *App) openOnHotKey() {
 	}
 
 	for range a.hotkey.Keydown() {
-		runtime.WindowReload(a.CTX)
 		runtime.WindowShow(a.CTX)
 	}
 }

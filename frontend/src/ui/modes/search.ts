@@ -27,18 +27,18 @@ class Search {
     constructor(uiHandler: UIHandler) {
         this.uiHandler = uiHandler;
 
-        this.uiHandler.leftIcon.addEventListener("mouseenter", () => {this.updateLeftRightIcons(true, true);});
-        this.uiHandler.leftIcon.addEventListener("mouseleave", () => {this.updateLeftRightIcons(false, true);});
-        this.uiHandler.leftIcon.addEventListener("click", () => {
-            this.updatePage(-1);
-            this.updateLeftRightIcons(true, true);
+        this.uiHandler.leftIcon.addEventListener("mouseenter", async () => {await this.updateLeftRightIcons(true, true);});
+        this.uiHandler.leftIcon.addEventListener("mouseleave", async () => {await this.updateLeftRightIcons(false, true);});
+        this.uiHandler.leftIcon.addEventListener("click", async () => {
+            await this.updatePage(-1);
+            await this.updateLeftRightIcons(true, true);
         });
 
-        this.uiHandler.rightIcon.addEventListener("mouseenter", () => {this.updateLeftRightIcons(true, false);});
-        this.uiHandler.rightIcon.addEventListener("mouseleave", () => {this.updateLeftRightIcons(false, false);});
-        this.uiHandler.rightIcon.addEventListener("click", () => {
-            this.updatePage(1);
-            this.updateLeftRightIcons(true, false);
+        this.uiHandler.rightIcon.addEventListener("mouseenter", async () => {await this.updateLeftRightIcons(true, false);});
+        this.uiHandler.rightIcon.addEventListener("mouseleave", async () => {await this.updateLeftRightIcons(false, false);});
+        this.uiHandler.rightIcon.addEventListener("click", async () => {
+            await this.updatePage(1);
+            await this.updateLeftRightIcons(true, false);
         });
     }
 
@@ -61,8 +61,7 @@ class Search {
         this.#searching = false;
         this.#results = results;
 
-        this.updatePage(0)
-        await this.displayResults();
+        await this.updatePage(0)
     }
 
     /**
@@ -73,6 +72,7 @@ class Search {
     async updatePage(change: number): Promise<void> {
         if (change === 0) {
             this.#resultPage = 0;
+            await this.displayResults();
             return;
         }
 
@@ -97,7 +97,7 @@ class Search {
         this.uiHandler.rightSection.classList.remove("loading-grid");
 
         if (this.uiHandler.searchBar.value.length === 0) {
-            this.uiHandler.resetUI();
+            await this.uiHandler.resetUI();
             return;
         }
 
@@ -190,7 +190,7 @@ class Search {
 
                 this.uiHandler.leftIcon.src = await GetImageData("magnifying_glass");
             } else {
-                this.uiHandler.rightIcon.classList.add("icon-clickable");
+                this.uiHandler.rightIcon.classList.remove("icon-clickable");
 
                 if (this.#results.length > 0) {
                     this.uiHandler.rightIcon.src = await GetImageData("tick");
@@ -200,7 +200,7 @@ class Search {
             }
         }
 
-        if (this.uiHandler.searchBar.value.length === 0 || this.#searching || !mouseEnter) {
+        if (this.uiHandler.searchBar.value.length === 0 || this.#results.length === 0 || this.#searching || !mouseEnter) {
             await resetIcons();
             return;
         }

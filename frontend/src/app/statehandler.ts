@@ -35,7 +35,7 @@ class StateHandler {
 
     async reset(): Promise<void> {
         await this.uiHandler.resetUI();
-        this.search.newResults([] as Array<string>);
+        await this.search.newResults([] as Array<string>);
     }
 
     // openFile opens the given file and hides the app

@@ -37,7 +37,7 @@ EventsOn("hidApp", async () => {
 });
 
 // move the highlighted section with arrow keys and open afile with enter
-document.addEventListener("keydown", (event) => {
+document.addEventListener("keydown", async (event) => {
     if (event.key === "ArrowDown") {
         event.preventDefault()
         stateHandler.search.updateHighlightedComp(1);
@@ -45,7 +45,7 @@ document.addEventListener("keydown", (event) => {
         event.preventDefault()
         stateHandler.search.updateHighlightedComp(-1);
     } else if (event.key === "Enter") {
-        stateHandler.openFile(stateHandler.search.getHighlightedFile());
+        await stateHandler.openFile(stateHandler.search.getHighlightedFile());
     }
 });
 

@@ -25,10 +25,23 @@ body {
     height: 44px;
 }
 
-/* the magnifying glass takes 44x44 */
-#magnifying-glass {
-    margin: 6px;
+/* the left icon takes 44x44 */
+#left-icon {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
 }
+
+/* the right section takes 44x44 (it's other or sub classes have margins/paddings to make up for the missing amount) */
+#right-section {
+    width: 32px;
+    height: 32px;
+}
+
+#right-icon {
+    padding: 6px;
+}
+
 
 /* the search bar takes 482x44 */
 #search-bar {

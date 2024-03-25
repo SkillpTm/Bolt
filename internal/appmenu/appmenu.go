@@ -36,6 +36,7 @@ func Get() *menu.Menu {
 	return appMenu
 }
 
+// OnReady adds our application to the windows system tray
 func OnReady() {
 	systray.SetIcon(AppIcon)
 	systray.SetTooltip("Quick Search")

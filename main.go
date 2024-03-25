@@ -7,13 +7,14 @@ import (
 	"fmt"
 
 	"github.com/getlantern/systray"
-	"github.com/skillptm/Quick-Search/internal/app"
-	"github.com/skillptm/Quick-Search/internal/appmenu"
 	"github.com/skillptm/bws"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+
+	"github.com/skillptm/Quick-Search/internal/app"
+	"github.com/skillptm/Quick-Search/internal/appmenu"
 )
 
 // <---------------------------------------------------------------------------------------------------->

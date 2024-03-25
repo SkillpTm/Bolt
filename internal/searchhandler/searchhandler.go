@@ -29,6 +29,32 @@ func New() *SearchHandler {
 	}
 }
 
+// StartSearch will start the search in a goroutine
+func (searchHandler *SearchHandler) StartSearch(input string) {
+	// if there currently is a search ongoing stop it
+	if searchHandler.searching {
+		searchHandler.BreakChan <- true
+		searchHandler.searching = false
+	}
+
+	// set a new break channel, to stop confusion on what search to break
+	searchHandler.BreakChan = make(chan bool, 1)
+
+	// launch the search as a gorutine
+	go func() {
+		searchString, fileExtensions, extendedSearch := matchFlags(input)
+		searchHandler.searching = true
+
+		// start the search with the option of breaking it
+		result, brokenEarly := bws.GoSearchWithBreak(searchString, fileExtensions, extendedSearch, searchHandler.BreakChan)
+
+		if !brokenEarly {
+			// put the results in the results channel so app.EmitSearchResult can emit them to the frontend
+			searchHandler.ResultsChan <- result
+		}
+	}()
+}
+
 /*
 matchFlags cleans the input and returns the flag values in it, it also removes leading and trailing white space.
 
@@ -84,30 +110,4 @@ func matchFlags(input string) (string, []string, bool) {
 	input = strings.TrimSpace(input)
 
 	return input, extensions, extendedSearch
-}
-
-// StartSearch will start the search in a goroutine
-func (searchHandler *SearchHandler) StartSearch(input string) {
-	// if there currently is a search ongoing stop it
-	if searchHandler.searching {
-		searchHandler.BreakChan <- true
-		searchHandler.searching = false
-	}
-
-	// set a new break channel, to stop confusion on what search to break
-	searchHandler.BreakChan = make(chan bool, 1)
-
-	// launch the search as a gorutine
-	go func() {
-		searchString, fileExtensions, extendedSearch := matchFlags(input)
-		searchHandler.searching = true
-
-		// start the search with the option of breaking it
-		result, brokenEarly := bws.GoSearchWithBreak(searchString, fileExtensions, extendedSearch, searchHandler.BreakChan)
-
-		if !brokenEarly {
-			// put the results in the results channel so app.EmitSearchResult can emit them to the frontend
-			searchHandler.ResultsChan <- result
-		}
-	}()
 }

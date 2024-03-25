@@ -15,10 +15,11 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/skillptm/Quick-Search/internal/searchhandler"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.design/x/hotkey"
 	"golang.org/x/sys/windows"
+
+	"github.com/skillptm/Quick-Search/internal/searchhandler"
 )
 
 // <---------------------------------------------------------------------------------------------------->
@@ -65,10 +66,12 @@ It also starts the goroutine for emiting the search results to the frontend.
 */
 func (a *App) Startup(CTX context.Context) {
 	a.CTX = CTX
-	go a.EmitSearchResult()
+	go a.emitSearchResult()
 	go a.openOnHotKey()
 	go a.windowHideOnUnselected()
 }
+
+// <---------------------------------------------------------------------------------------------------->
 
 // GetImageData receives a key (being the name of an image) and returns the base64 string data of that image
 func (a *App) GetImageData(name string) string {
@@ -89,17 +92,19 @@ func (a *App) LaunchSearch(input string) {
 	a.SearchHandler.StartSearch(input)
 }
 
-// EmitSearchResult runs continuously and emits the search results with the "searchResult" event to the frontend
-func (a *App) EmitSearchResult() {
-	for result := range a.SearchHandler.ResultsChan {
-		runtime.EventsEmit(a.CTX, "searchResult", result)
-	}
-}
-
 // OpenFileExplorer allows you to open the file explorer at any entry's location
 func (a *App) OpenFileExplorer(filePath string) {
 	cmd := exec.Command("explorer", "/select,", strings.TrimSuffix(strings.ReplaceAll(filePath, "/", "\\"), "\\"))
 	cmd.Run()
+}
+
+// <---------------------------------------------------------------------------------------------------->
+
+// emitSearchResult runs continuously and emits the search results with the "searchResult" event to the frontend
+func (a *App) emitSearchResult() {
+	for result := range a.SearchHandler.ResultsChan {
+		runtime.EventsEmit(a.CTX, "searchResult", result)
+	}
 }
 
 // openOnHotKey will unhide and reload the app when ctrl+shift+s is pressed

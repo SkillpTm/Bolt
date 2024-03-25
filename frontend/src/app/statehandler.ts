@@ -5,7 +5,7 @@ export {StateHandler}
 import { OpenFileExplorer } from "../../wailsjs/go/app/App";
 import { WindowHide } from "../../wailsjs/runtime/runtime";
 
-import { UIHandler } from "./uihandler";
+import { UIHandler } from "../ui/uihandler";
 
 /* <----------------------------------------------------------------------------------------------------> */
 

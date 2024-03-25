@@ -41,6 +41,7 @@ class UIHandler {
     #resultStatus = document.getElementById("result-status") as HTMLImageElement;
 
     components = [] as Array<Component>;
+    #displayedComps = 0;
     #highlightedComp = 0;
     #maxComponents = 0;
     #page = 0;
@@ -118,9 +119,9 @@ class UIHandler {
         if (change === 0) {
             this.#highlightedComp = 0;
         } else if (change < 0) {
-            this.#highlightedComp = (this.#highlightedComp + change + this.components.length) % this.components.length;
+            this.#highlightedComp = (this.#highlightedComp + change + this.#displayedComps) % this.#displayedComps;
         } else {
-            this.#highlightedComp = (this.#highlightedComp + change) % this.components.length;
+            this.#highlightedComp = (this.#highlightedComp + change) % this.#displayedComps;
         }
 
         this.components[this.#highlightedComp].self.classList.add("highligthed");
@@ -132,10 +133,13 @@ class UIHandler {
             amount = this.#maxComponents;
         }
 
+        this.#displayedComps = 0;
+
         WindowSetSize(570, UIHandler.TOP_BAR_SIZE + (amount * UIHandler.COMPONENT_SIZE));
 
         for (let index = 0; index < this.components.length; index++) {
             if (index + 1 <= amount) {
+                this.#displayedComps++;
                 this.components[index].self.classList.remove("hideComp");
                 this.components[index].self.classList.add("showComp");
             } else {
@@ -173,7 +177,7 @@ class UIHandler {
             return;
         }
 
-        if ((this.#page + change) === 0) {
+        if ((this.#page + change) < 0) {
             return;
         }
 

@@ -6,7 +6,7 @@ import { LaunchSearch } from "../wailsjs/go/app/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 
 import { StateHandler } from "./app/statehandler";
-import { UIHandler } from "./app/uihandler";
+import { UIHandler } from "./ui/uihandler";
 
 /* <----------------------------------------------------------------------------------------------------> */
 

@@ -36,6 +36,7 @@ type App struct {
 func NewApp(images embed.FS) (*App, error) {
 	imagePaths := map[string]string{
 		"cross":            "frontend/src/assets/images/cross.png",
+		"google":           "frontend/src/assets/images/google.png",
 		"file":             "frontend/src/assets/images/file.png",
 		"folder":           "frontend/src/assets/images/folder.png",
 		"left":             "frontend/src/assets/images/left.png",

@@ -10,7 +10,7 @@ import { UIHandler } from "./ui/uihandler";
 
 /* <----------------------------------------------------------------------------------------------------> */
 
-const stateHandler = new StateHandler(new UIHandler(7));
+const stateHandler = new StateHandler(new UIHandler(8));
 
 /* <----------------------------------------------------------------------------------------------------> */
 
@@ -50,9 +50,9 @@ document.addEventListener("keydown", async (event) => {
 });
 
 // send the current input to Go to search the file system
-stateHandler.uiHandler.searchBar.addEventListener("input", () => {
+stateHandler.uiHandler.searchBar.addEventListener("input", async () => {
     stateHandler.search.newSearch();
-    LaunchSearch(stateHandler.uiHandler.searchBar.value);
+    await LaunchSearch(stateHandler.uiHandler.searchBar.value);
 });
 
 // when Go found results receive, handle and display them

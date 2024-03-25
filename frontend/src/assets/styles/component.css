@@ -72,3 +72,7 @@
 
     color: var(--gray);
 }
+
+.webSearch {
+    color: rgb(40, 153, 255); 
+}

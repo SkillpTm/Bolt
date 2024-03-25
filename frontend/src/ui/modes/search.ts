@@ -79,7 +79,7 @@ class Search {
         }
 
         // if the new page would be out of bounds we simply don't change the resultPage value
-        if ((this.#resultPage + change) * this.uiHandler.components.length > this.#results.length - 1) {
+        if ((this.#resultPage + change) * (this.uiHandler.components.length - 2) > (this.#results.length - 1)) {
             return;
         }
 
@@ -99,6 +99,9 @@ class Search {
         this.uiHandler.rightSection.classList.remove("loading-grid");
         this.uiHandler.rightSection.classList.add("hide");
         this.uiHandler.rightIcon.classList.remove("hide");
+        if (this.uiHandler.displayedComps > 0) {
+            this.uiHandler.components[this.uiHandler.displayedComps-1].value.classList.remove("webSearch");
+        }
 
         if (this.uiHandler.searchBar.value.length === 0) {
             await this.uiHandler.resetUI();
@@ -111,10 +114,11 @@ class Search {
             this.uiHandler.rightIcon.src = await GetImageData("cross");
         }
 
-        let displayAmount = 0;
+        // is set to 1, because we always want to at least display the web search component
+        let displayAmount = 1;
 
-        for (let index = 0; index < this.#results.length && index < this.uiHandler.components.length; index++) {
-            const currentFile = index + (this.uiHandler.components.length * this.#resultPage);
+        for (let index = 0; index < this.#results.length && index < (this.uiHandler.components.length - 2); index++) {
+            const currentFile = index + ((this.uiHandler.components.length - 2) * this.#resultPage);
 
             if (currentFile > this.#results.length-1) {
                 break;
@@ -137,8 +141,17 @@ class Search {
             displayAmount++;
         }
 
+        await this.#insertWebSearch(displayAmount-1);
+
         this.updateHighlightedComp(0);
         this.uiHandler.displayComponents(displayAmount);
+    }
+
+    async #insertWebSearch(index: number) {
+        this.uiHandler.components[index].image.src = await GetImageData("google");
+        this.uiHandler.components[index].name.textContent = this.uiHandler.searchBar.value;
+        this.uiHandler.components[index].value.textContent = "Search on Google";
+        this.uiHandler.components[index].value.classList.add("webSearch");
     }
 
     /**
@@ -166,7 +179,11 @@ class Search {
      * @returns the full path of highlighted component.
      */
     getHighlightedFile(): string {
-        return this.#results[this.#resultPage * this.uiHandler.components.length + this.#highlightedComp];
+        if (this.#highlightedComp === (this.uiHandler.displayedComps - 1)) {
+            return "<web-search>";
+        } else {
+            return this.#results[this.#resultPage * (this.uiHandler.components.length - 2) + this.#highlightedComp];
+        }
     }
 
     /**
@@ -177,7 +194,11 @@ class Search {
      * @returns the full path of hovered over component.
      */
     getHoveredFile(comp: Component): string {
-        return this.#results[this.#resultPage * this.uiHandler.components.length + (parseInt(comp.self.id[9]) -1)];
+        if ((parseInt(comp.self.id[9]) - 1) === (this.uiHandler.displayedComps - 1)) {
+            return "<web-search>";
+        } else {
+            return this.#results[this.#resultPage * (this.uiHandler.components.length - 2) + (parseInt(comp.self.id[9]) -1)];
+        }
     }
 
     /**
@@ -220,7 +241,7 @@ class Search {
         } else {
             this.uiHandler.rightIcon.classList.add("icon-clickable");
 
-            if (this.#resultPage * this.uiHandler.components.length < this.#results.length - 1) {
+            if (this.#resultPage * (this.uiHandler.components.length - 1) < (this.#results.length - 1)) {
                 this.uiHandler.rightIcon.src = await GetImageData("right");
             } else {
                 this.uiHandler.rightIcon.src = await GetImageData("not-right");

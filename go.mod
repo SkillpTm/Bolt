@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/getlantern/systray v1.2.2
-	github.com/skillptm/bws v0.6.1
+	github.com/skillptm/bws v0.6.2
 	github.com/wailsapp/wails/v2 v2.8.0
 	golang.design/x/hotkey v0.4.1
 	golang.org/x/sys v0.16.0

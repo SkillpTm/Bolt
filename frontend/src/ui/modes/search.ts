@@ -147,6 +147,11 @@ class Search {
         this.uiHandler.displayComponents(displayAmount);
     }
 
+    /**
+     * Takes the provided component (which should always be the last to be displayed) and turns it into a web search specific result.
+     *
+     * @param index the index of the component on the uiHandler to be modified
+     */
     async #insertWebSearch(index: number) {
         this.uiHandler.components[index].image.src = await GetImageData("google");
         this.uiHandler.components[index].name.textContent = this.uiHandler.searchBar.value;

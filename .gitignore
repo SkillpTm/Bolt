@@ -5,3 +5,4 @@ go.work
 build/darwin
 node_modules
 frontend/dist
+frontend/wailsjs

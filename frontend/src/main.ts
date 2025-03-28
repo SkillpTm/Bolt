@@ -1,6 +1,6 @@
-import "./assets/styles/main.css";
-import "./assets/styles/searchicons.css";
-import "./assets/styles/component.css";
+import "../styles/main.css";
+import "../styles/searchicons.css";
+import "../styles/component.css";
 
 import { LaunchSearch } from "../wailsjs/go/app/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";

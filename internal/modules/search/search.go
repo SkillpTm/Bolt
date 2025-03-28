@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/skillptm/bws/internal/cache"
+	"github.com/skillptm/Bolt/internal/modules/search/cache"
 )
 
 // <---------------------------------------------------------------------------------------------------->

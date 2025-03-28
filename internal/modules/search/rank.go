@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skillptm/bws/internal/config"
+	"github.com/skillptm/Bolt/internal/modules/search/config"
 )
 
 const (

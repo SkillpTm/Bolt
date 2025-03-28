@@ -8,7 +8,7 @@ import (
 	"math"
 	"runtime"
 
-	"github.com/skillptm/bws/internal/util"
+	"github.com/skillptm/Bolt/internal/modules/search/util"
 )
 
 // <---------------------------------------------------------------------------------------------------->

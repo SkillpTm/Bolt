@@ -1,5 +1,5 @@
-// Package bws contains the main Search function and start up logic of bws.
-package bws
+// Package modules contains the main Search function and start up logic of bws.
+package modules
 
 // <---------------------------------------------------------------------------------------------------->
 
@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/skillptm/bws/internal/cache"
-	"github.com/skillptm/bws/internal/config"
-	"github.com/skillptm/bws/internal/search"
+	"github.com/skillptm/Bolt/internal/modules/search"
+	"github.com/skillptm/Bolt/internal/modules/search/cache"
+	"github.com/skillptm/Bolt/internal/modules/search/config"
 )
 
 // <---------------------------------------------------------------------------------------------------->

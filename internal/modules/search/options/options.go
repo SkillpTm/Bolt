@@ -9,9 +9,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/skillptm/bws/internal/cache"
-	"github.com/skillptm/bws/internal/config"
-	"github.com/skillptm/bws/internal/util"
+	"github.com/skillptm/Bolt/internal/modules/search/cache"
+	"github.com/skillptm/Bolt/internal/modules/search/config"
+	"github.com/skillptm/Bolt/internal/modules/search/util"
 )
 
 // <---------------------------------------------------------------------------------------------------->

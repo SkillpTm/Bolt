@@ -1,4 +1,4 @@
-module github.com/skillptm/Quick-Search
+module github.com/skillptm/Bolt
 
 go 1.22.0
 

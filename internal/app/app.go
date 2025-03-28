@@ -19,7 +19,7 @@ import (
 	"golang.design/x/hotkey"
 	"golang.org/x/sys/windows"
 
-	"github.com/skillptm/Quick-Search/internal/searchhandler"
+	"github.com/skillptm/Bolt/internal/searchhandler"
 )
 
 // <---------------------------------------------------------------------------------------------------->

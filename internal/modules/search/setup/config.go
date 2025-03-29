@@ -3,6 +3,7 @@ package setup
 import (
 	"fmt"
 	"math"
+	"os"
 	"path"
 	"regexp"
 	"runtime"
@@ -51,39 +52,56 @@ func (dr *DirsRules) Check(dirPath string) (bool, error) {
 func NewConfig() (*Config, error) {
 	newConfig := Config{}
 
-	configMap, err := util.GetJSON("~./.config/bolt/config.json")
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return &newConfig, fmt.Errorf("NewConfig: couldn't access the user's config dir:\n--> %w", err)
+	}
+
+	configMap, err := util.GetJSON(fmt.Sprintf("%s/bolt/config.json", configDir))
 	if err != nil {
 		return &newConfig, fmt.Errorf("New: couldn't get JSON map:\n--> %w", err)
 	}
 
-	newConfig.MaxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * float64(configMap["maxCPUThreadPercentage"].(int))))
+	newConfig.MaxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * configMap["maxCPUThreadPercentage"].(float64)))
 
 	for key, value := range configMap {
-		names := map[string]bool{}
-		for _, name := range value.(map[string][]string)["name"] {
-			names[name] = true
+		getStrings := func(input any) []string {
+			dirs := []string{}
+			for _, dir := range input.([]any) {
+				dirs = append(dirs, dir.(string))
+			}
+			return dirs
 		}
 
-		paths := map[string]bool{}
-		for _, path := range value.(map[string][]string)["path"] {
-			paths[path] = true
-		}
+		getDirsRules := func() DirsRules {
+			names := map[string]bool{}
+			for _, name := range value.(map[string]any)["name"].([]any) {
+				names[name.(string)] = true
+			}
 
-		rules := DirsRules{
-			names,
-			paths,
-			value.(map[string][]string)["regex"],
+			paths := map[string]bool{}
+			for _, path := range value.(map[string]any)["path"].([]any) {
+				paths[path.(string)] = true
+			}
+
+			rules := DirsRules{
+				names,
+				paths,
+				getStrings(value.(map[string]any)["regex"]),
+			}
+
+			return rules
 		}
 
 		switch key {
 		case "defaultDirs":
-			newConfig.DefaultDirs = value.([]string)
+			newConfig.DefaultDirs = getStrings(value)
 		case "extendedDirs":
-			newConfig.ExtendedDirs = value.([]string)
+			newConfig.ExtendedDirs = getStrings(value)
 		case "excludeFromDefaultDirs":
-			newConfig.ExcludeFromDefaultDirs = rules
+			newConfig.ExcludeFromDefaultDirs = getDirsRules()
 		case "excludeDirs":
-			newConfig.ExcludeDirs = rules
+			newConfig.ExcludeDirs = getDirsRules()
 		}
 	}
 

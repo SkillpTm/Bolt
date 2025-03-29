@@ -2,8 +2,10 @@ package setup
 
 import (
 	"fmt"
+	"math"
 	"path"
 	"regexp"
+	"runtime"
 
 	"github.com/skillptm/Bolt/internal/util"
 )
@@ -17,11 +19,11 @@ type DirsRules struct {
 
 // Config holds the data from the config.json
 type Config struct {
-	maxCPUThreadPercentage int
-	defaultDirs            []string
-	extendedDirs           []string
-	excludeFromDefaultDirs DirsRules
-	excludeDirs            DirsRules
+	MaxCPUThreads          int
+	DefaultDirs            []string
+	ExtendedDirs           []string
+	ExcludeFromDefaultDirs DirsRules
+	ExcludeDirs            DirsRules
 }
 
 // Check finds out if the provided Directory breaks any of the name, path or regex rules
@@ -54,7 +56,7 @@ func NewConfig() (*Config, error) {
 		return &newConfig, fmt.Errorf("New: couldn't get JSON map:\n--> %w", err)
 	}
 
-	newConfig.maxCPUThreadPercentage = configMap["maxCPUThreadPercentage"].(int)
+	newConfig.MaxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * float64(configMap["maxCPUThreadPercentage"].(int))))
 
 	for key, value := range configMap {
 		names := map[string]bool{}
@@ -75,13 +77,13 @@ func NewConfig() (*Config, error) {
 
 		switch key {
 		case "defaultDirs":
-			newConfig.defaultDirs = value.([]string)
+			newConfig.DefaultDirs = value.([]string)
 		case "extendedDirs":
-			newConfig.extendedDirs = value.([]string)
+			newConfig.ExtendedDirs = value.([]string)
 		case "excludeFromDefaultDirs":
-			newConfig.excludeFromDefaultDirs = rules
+			newConfig.ExcludeFromDefaultDirs = rules
 		case "excludeDirs":
-			newConfig.excludeDirs = rules
+			newConfig.ExcludeDirs = rules
 		}
 	}
 

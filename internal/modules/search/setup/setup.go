@@ -1,4 +1,4 @@
-// Package setup ...
+// Package setup ensures folders and files needed through the filesystem (like cache and config) are setup
 package setup
 
 import (
@@ -11,6 +11,7 @@ import (
 	"github.com/skillptm/Bolt/internal/util"
 )
 
+// ConfigJSONData is made to structer and order the data for the config.json
 type ConfigJSONData struct {
 	MaxCPUThreadPercentage float64  `json:"maxCPUThreadPercentage"`
 	DefaultDirs            []string `json:"defaultDirs"`
@@ -19,6 +20,7 @@ type ConfigJSONData struct {
 	ExcludeDirs            Rules    `json:"excludeDirs"`
 }
 
+// Rules is made to structer and order the data for the config.json
 type Rules struct {
 	Name  []string `json:"name"`
 	Path  []string `json:"path"`

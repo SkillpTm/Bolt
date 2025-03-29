@@ -11,14 +11,38 @@ import (
 	"github.com/skillptm/Bolt/internal/util"
 )
 
-// Setup validtes all files/folders we need exist
+type ConfigJSONData struct {
+	MaxCPUThreadPercentage int      `json:"maxCPUThreadPercentage"`
+	DefaultDirs            []string `json:"defaultDirs"`
+	ExtendedDirs           []string `json:"extendedDirs"`
+	ExcludeFromDefaultDirs Rules    `json:"excludeFromDefaultDirs"`
+	ExcludeDirs            Rules    `json:"excludeDirs"`
+}
+
+type Rules struct {
+	Name  []string `json:"name"`
+	Path  []string `json:"path"`
+	Regex []string `json:"regex"`
+}
+
+// Setup validates all files/folders we need to exist
 func Setup() error {
-	dirs := map[string]string{
-		"~./.config/bolt/config.json":     "~./.config/bolt/",
-		"/var/lib/bolt/search-cache.json": "/var/lib/bolt/",
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return fmt.Errorf("Setup: couldn't access the user's cache dir:\n--> %w", err)
 	}
 
-	err := validateFolders(slices.Collect(maps.Values(dirs)))
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return fmt.Errorf("Setup: couldn't access the user's config dir:\n--> %w", err)
+	}
+
+	dirs := map[string]string{
+		fmt.Sprintf("%s/bolt/search-cache.json", cacheDir): fmt.Sprintf("%s/bolt/", cacheDir),
+		fmt.Sprintf("%s/bolt/config.json", configDir):      fmt.Sprintf("%s/bolt/", configDir),
+	}
+
+	err = validateFolders(slices.Collect(maps.Values(dirs)))
 	if err != nil {
 		return fmt.Errorf("Setup: couldn't validate default folders:\n--> %w", err)
 	}
@@ -31,7 +55,7 @@ func Setup() error {
 	return nil
 }
 
-// validateFolders checks, if our fodler in ~/.config/ and /var/lib/ exist
+// validateFolders checks, if our folders in the user's config/cache dirs exists
 func validateFolders(dirsToCheck []string) error {
 	for _, dir := range dirsToCheck {
 		if _, err := os.Stat(dir); !os.IsNotExist(err) {
@@ -69,33 +93,43 @@ func validateFiles(filesToCheck []string) error {
 
 // resetConfig resets the config file to the default settings
 func resetConfig() error {
-	defaultConfig := map[string]any{
-		"maxCPUThreadPercentage": 20, // percentage of threads that may be used, always rounding the threads up
-		"defaultDirs": []string{
-			"~/",
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("resetConfig: couldn't find the user's home dir:\n--> %w", err)
+	}
+
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return fmt.Errorf("resetConfig: couldn't access the user's config dir:\n--> %w", err)
+	}
+
+	defaultConfig := ConfigJSONData{
+		MaxCPUThreadPercentage: 20, // percentage of threads that may be used, always rounding the threads up
+		DefaultDirs: []string{
+			fmt.Sprintf("%s/", homedir),
 		},
-		"extendedDirs": []string{
+		ExtendedDirs: []string{
 			"/",
 		},
-		"excludeFromDefaultDirs": map[string][]string{
-			"name": {},
-			"path": {},
-			"regex": {
+		ExcludeFromDefaultDirs: Rules{
+			Name: []string{},
+			Path: []string{},
+			Regex: []string{
 				`^\..+`,
 			},
 		},
-		"excludeDirs": map[string][]string{
-			"name": {
+		ExcludeDirs: Rules{
+			Name: []string{
 				".git",
 				"node_modules",
 				"steamapps",
 			},
-			"path":  {},
-			"regex": {},
+			Path:  []string{},
+			Regex: []string{},
 		},
 	}
 
-	err := util.OverwriteJSON("~./.config/bolt/config.json", defaultConfig)
+	err = util.OverwriteJSON(fmt.Sprintf("%s/bolt/config.json", configDir), defaultConfig)
 	if err != nil {
 		return fmt.Errorf("resetConfig: couldn't reset default config:\n--> %w", err)
 	}

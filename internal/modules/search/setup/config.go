@@ -18,8 +18,8 @@ type DirsRules struct {
 // Config holds the data from the config.json
 type Config struct {
 	maxCPUThreadPercentage int
-	defaultDirs            DirsRules
-	extendedDirs           DirsRules
+	defaultDirs            []string
+	extendedDirs           []string
 	excludeFromDefaultDirs DirsRules
 	excludeDirs            DirsRules
 }
@@ -75,9 +75,9 @@ func NewConfig() (*Config, error) {
 
 		switch key {
 		case "defaultDirs":
-			newConfig.defaultDirs = rules
+			newConfig.defaultDirs = value.([]string)
 		case "extendedDirs":
-			newConfig.extendedDirs = rules
+			newConfig.extendedDirs = value.([]string)
 		case "excludeFromDefaultDirs":
 			newConfig.excludeFromDefaultDirs = rules
 		case "excludeDirs":

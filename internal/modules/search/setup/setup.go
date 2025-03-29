@@ -71,19 +71,11 @@ func validateFiles(filesToCheck []string) error {
 func resetConfig() error {
 	defaultConfig := map[string]any{
 		"maxCPUThreadPercentage": 20, // percentage of threads that may be used, always rounding the threads up
-		"defaultDirs": map[string][]string{
-			"name": {},
-			"path": {
-				"~/",
-			},
-			"regex": {},
+		"defaultDirs": []string{
+			"~/",
 		},
-		"extendedDirs": map[string][]string{
-			"name": {},
-			"path": {
-				"/",
-			},
-			"regex": {},
+		"extendedDirs": []string{
+			"/",
 		},
 		"excludeFromDefaultDirs": map[string][]string{
 			"name": {},

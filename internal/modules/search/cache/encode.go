@@ -1,13 +1,9 @@
 // Package cache handles everything that has to do with the generation of the cache for the Search function.
 package cache
 
-// <---------------------------------------------------------------------------------------------------->
-
 import (
 	"strings"
 )
-
-// <---------------------------------------------------------------------------------------------------->
 
 // charMap with all relevant chars and byte position and increase value for bit flip
 var charMap = map[rune][]uint8{
@@ -26,26 +22,22 @@ var charMap = map[rune][]uint8{
 }
 
 // Encode takes in a string and return an 8 byte array. The array should be viewed as a 64 long bit chain.
-// The first 60 bit depending on if they're flipped or not indecate, whether a certain character is inside of the origin string (at least once).
+// The first 60 bit depending on, if they're flipped or not indecate, whether a certain character is inside of the origin string (at least once).
 // The 60 characters are all ascii chars (except for upper case letters).
-// This allows us to simply compare two byte arrays on if a string has all the characters as needded for the search string later one,
-// if that is not the case we can just skip that string and save having to do a full sub string search
+// This allows us to simply compare two byte arrays on, if a string has all the characters as needded, for the search string later on.
+// If that is not the case, we can just skip that string and save having to do a full sub string search
 func Encode(input string) [8]byte {
 	foundChars := make(map[rune]bool)
 	output := [8]byte{}
 
-	// loop over the chars of the input string
 	for _, char := range strings.ToLower(input) {
-		// check if the char was already found once
 		if _, ok := foundChars[char]; ok {
 			continue
 		}
 
-		// check if the char is (still) inside our charMap
+		// check if the char is on our charMap at all
 		if bitFlipValue, ok := charMap[char]; ok {
-			// if the char was still inside, bit flip the output at the correct position
 			output[bitFlipValue[0]] += bitFlipValue[1]
-			// add the char into the foundChars to noz accidentally add the bit flip value again
 			foundChars[char] = true
 		}
 	}
@@ -53,12 +45,11 @@ func Encode(input string) [8]byte {
 	return output
 }
 
-// CompareBytes checks if all required letters form the search string are inside the searched string
+// CompareBytes checks if all required letters from the search string are inside the searched string
 func CompareBytes(searchBytes [8]byte, compareBytes [8]byte) bool {
-	// Check if all flipped bits in searchBytes are also flipped in compareBytes
 	for index := range searchBytes {
 		if searchBytes[index]&^compareBytes[index] != 0 {
-			// if we ever reach here it means that one of relevant bits wasn't flipped
+			// if we ever reach here it means that one of the relevant bits wasn't flipped
 			return false
 		}
 	}

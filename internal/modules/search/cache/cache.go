@@ -1,194 +1,160 @@
 // Package cache handles everything that has to do with the generation of the cache for the Search function.
 package cache
 
-// <---------------------------------------------------------------------------------------------------->
-
 import (
+	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 	"sync"
-	"time"
 
-	"github.com/skillptm/Bolt/internal/modules/search/config"
-	"github.com/skillptm/Bolt/internal/modules/search/util"
+	"github.com/skillptm/Bolt/internal/modules/search/setup"
 )
 
-// <---------------------------------------------------------------------------------------------------->
+/*
+Filesystem stores all the searchable files in the following pattern, which is optimsed primarily for speed and secondarily for memory efficiency:
 
-var (
-	EntrieFilesystem *Filesystem = &Filesystem{SetupProperly: false}
-)
-
-// <---------------------------------------------------------------------------------------------------->
-
+paths: map[unique ID]Absolute Path
+dirMap: map[File Extension]map[File Length][]File{encodedName, name, pathKey}
+*/
 type Filesystem struct {
-	MainDirs      map[string]map[int][][]interface{}
-	SecondaryDirs map[string]map[int][][]interface{}
+	IncludedDirs []string
+	ExcludedDirs []setup.DirsRules
 
-	SetupProperly bool
-	Updateable    bool
+	Paths  map[int]string
+	DirMap map[string]map[int][]File
 }
 
-// New returns a pointer to a Filesystem struct that has been filled up according to the config file
-func New(mainDirPaths []string, secondaryDirPaths []string) *Filesystem {
+// File stores all the data we need for a fast retrival later on
+type File struct {
+	EncodedName [8]byte
+	Name        string
+	PathKey     int
+}
+
+// basicFile is a temp struct we use to not have to re-gather file data between different actions
+type basicFile struct {
+	extension string
+	isFolder  bool
+	name      string
+	nameLen   int
+	path      string
+}
+
+// NewFilesystem returns a pointer to a Filesystem struct that has been filled up according to the includedDirs, excludedDirs and config
+func NewFilesystem(includedDirs []string, excludedDirs []setup.DirsRules, config *setup.Config) *Filesystem {
 	fs := Filesystem{
-		MainDirs:      make(map[string]map[int][][]interface{}),
-		SecondaryDirs: make(map[string]map[int][][]interface{}),
-		SetupProperly: false,
-		Updateable:    false,
+		IncludedDirs: includedDirs,
+		ExcludedDirs: excludedDirs,
+		Paths:        make(map[int]string),
+		DirMap:       make(map[string]map[int][]File),
 	}
 
-	fs.Update(mainDirPaths, true)
-	fs.Update(secondaryDirPaths, false)
-
-	fs.SetupProperly = true
+	fs.Update(config)
 
 	return &fs
 }
 
-// Update gets and sets the folders set to either mainDirPaths or secondaryDirPaths
-func (fs *Filesystem) Update(dirPaths []string, isMainDirs bool) {
-	fs.Updateable = false
-	defer func() {
-		fs.Updateable = true
-	}()
-
-	// if we aren't adding to the MainDirs add the excluded MainDirs directly to the queue
-	if !isMainDirs {
-		dirPaths = append(dirPaths, config.BWSConfig.ExcludeSubMainDirs...)
-	}
-
-	if len(dirPaths) < 1 {
-		return
-	}
+// Update launches the traversing of the includedDirs and later starts the adding of the results onto the fs
+func (fs *Filesystem) Update(config *setup.Config) {
 
 	// 10000000 is the channel size, because we just need a ridiculously large channel to store all the paths until we traversed them
-	var pathQueue = make(chan string, 10000000)
+	pathQueue := make(chan string, 10000000)
+	results := make(chan *basicFile, 10000000)
+	var wg sync.WaitGroup
 
-	for _, dir := range dirPaths {
+	for _, dir := range fs.IncludedDirs {
+		wg.Add(1)
 		pathQueue <- dir
 	}
 
-	var wg sync.WaitGroup
-
-	// 10000000 is the channel size, because we just need a ridiculously large channel to store all the results until we add them to the fs
-	resultsChan := make(chan *[]string, 10000000)
-
-	for range config.BWSConfig.CPUThreads {
-		wg.Add(1)
-		go fs.traverse(isMainDirs, pathQueue, resultsChan, &wg)
-		time.Sleep(5 * time.Millisecond)
+	for range config.MaxCPUThreads {
+		go fs.traverse(pathQueue, results, &wg)
 	}
 
 	wg.Wait()
-
-	close(resultsChan)
+	close(results)
 	close(pathQueue)
-
-	fs.add(resultsChan, isMainDirs)
+	fs.add(results)
 }
 
-// walkDir walks through the pathQueue and adds all new and valid entries into the resultsChan
-func (fs *Filesystem) traverse(isMainDirs bool, pathQueue chan string, resultsChan chan<- *[]string, wg *sync.WaitGroup) {
-	// when the queue is empty disolve the worker
-	defer wg.Done()
-
-	// loop over the queue until it's empty
-	for {
-		currentDir := <-pathQueue
+// traverse walks through and expands the pathQueue to store all files and folders it encounters in resultsChan unless it breaks with excludedDirs
+func (fs *Filesystem) traverse(pathQueue chan string, resultsChan chan<- *basicFile, wg *sync.WaitGroup) {
+	for currentDir := range pathQueue {
 		currentEntries, err := os.ReadDir(currentDir)
+		// an error here simply means we didn't have the permissions to read a dir, so we ignore it
 		if err != nil {
-			// an error here simply means we didn't have the permissions to read a dir, so we ignore it
-			if len(pathQueue) < 1 {
-				break
-			}
-
+			wg.Done()
 			continue
 		}
 
+	entryLoop:
 		for _, entry := range currentEntries {
 			if entry.IsDir() {
-				entryPath := util.FormatEntry(filepath.Join(currentDir, entry.Name()), true)
-
-				// check if the current dir is an excluded name
-				if slices.Contains(config.BWSConfig.ExcludeDirsByName, util.FormatEntry(entry.Name(), true)) {
-					continue
+				if entry.Name() == "." || entry.Name() == ".." {
+					continue entryLoop
 				}
 
-				// check if the dir is excluded
-				if slices.Contains(config.BWSConfig.ExcludeDirs, entryPath) {
-					continue
+				entryPath := fmt.Sprintf("%s%s", filepath.Join(currentDir, entry.Name()), string(filepath.Separator))
+
+				for _, rules := range fs.ExcludedDirs {
+					if checked, err := rules.Check(entryPath); !checked || err != nil {
+						continue entryLoop
+					}
 				}
 
-				// check if we found a MainDirs folder while not MainDirs working with MainDirs
-				if !isMainDirs && slices.Contains(config.BWSConfig.MainDirs, entryPath) {
-					continue
-				}
-
-				// check if the dir is in the excluded main dirs
-				if isMainDirs && slices.Contains(config.BWSConfig.ExcludeSubMainDirs, entryPath) {
-					continue
-				}
-
-				resultsChan <- &[]string{entryPath, entry.Name(), "Folder"}
+				resultsChan <- &basicFile{"Folder", true, entry.Name(), len(entry.Name()), entryPath}
+				wg.Add(1)
 				pathQueue <- entryPath
 			} else {
-				entryPath := util.FormatEntry(filepath.Join(currentDir, entry.Name()), false)
-				fileExtension := filepath.Ext(entry.Name())
+				entryPath := filepath.Join(currentDir, entry.Name())
+				fileExtension := filepath.Ext(entryPath)
+				fileName := entry.Name()
 
 				if len(fileExtension) < 1 {
 					fileExtension = "File"
+				} else {
+					fileName = fileName[:len(fileName)-len(fileExtension)]
 				}
-				resultsChan <- &[]string{entryPath, entry.Name(), fileExtension}
+				resultsChan <- &basicFile{fileExtension, false, fileName, len(fileName), entryPath}
 			}
 		}
 
-		if len(pathQueue) < 1 {
-			return
-		}
+		wg.Done()
 	}
 }
 
-// add adds the newEntries to the fs
-func (fs *Filesystem) add(resultsChan <-chan *[]string, isMainDirs bool) {
-	tempStorage := make(map[string]map[int][][]interface{})
+// add formats and overwrites the dirMap on fs
+func (fs *Filesystem) add(results <-chan *basicFile) {
+	newDirMap := make(map[string]map[int][]File)
+	newPaths := make(map[int]string)
 
 	for {
-		item, ok := <-resultsChan
-
-		// check if the channel is closed and empty
-		if !ok && len(resultsChan) < 1 {
+		item, ok := <-results
+		if !ok && len(results) < 1 {
 			break
 		}
 
-		itemPath := (*item)[0]
-		itemName := (*item)[1]
-		itemExtension := (*item)[2]
+		itemExtension := (*item).extension
+		itemIsFolder := (*item).isFolder
+		itemName := (*item).name
+		itemNameLen := (*item).nameLen
+		itemPath := (*item).path
 
-		// trim file extensions from the name, if it has one
-		if itemExtension != "File" && itemExtension != "Folder" {
-			itemName = itemName[:len(itemName)-len(itemExtension)]
+		if _, ok := newDirMap[itemExtension]; !ok {
+			newDirMap[itemExtension] = make(map[int][]File)
 		}
 
-		// check if the file type is already stored in the fs, if not add it in
-		if _, ok := tempStorage[itemExtension]; !ok {
-			tempStorage[itemExtension] = make(map[int][][]interface{})
+		if _, ok := newDirMap[itemExtension][itemNameLen]; !ok {
+			newDirMap[itemExtension][itemNameLen] = []File{}
 		}
 
-		// check if the file length is already stored for the file extension, if not add it in
-		if _, ok := tempStorage[itemExtension][len(itemName)]; !ok {
-			tempStorage[itemExtension][len(itemName)] = [][]interface{}{}
+		if itemIsFolder {
+			newPaths[len(newPaths)] = itemPath
 		}
 
-		// add the file into the fs at its length with the format: [path, name, [encoded bytes]]
-		tempStorage[itemExtension][len(itemName)] = append(tempStorage[itemExtension][len(itemName)], []interface{}{itemPath, strings.ToLower(itemName), Encode(itemName)})
+		newDirMap[itemExtension][itemNameLen] = append(newDirMap[itemExtension][itemNameLen], File{Encode(itemName), itemName, len(newPaths) - 1})
 	}
 
-	if isMainDirs {
-		fs.MainDirs = tempStorage
-	} else {
-		fs.SecondaryDirs = tempStorage
-	}
+	fs.Paths = newPaths
+	fs.DirMap = newDirMap
 }

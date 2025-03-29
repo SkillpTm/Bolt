@@ -12,7 +12,7 @@ import (
 )
 
 type ConfigJSONData struct {
-	MaxCPUThreadPercentage int      `json:"maxCPUThreadPercentage"`
+	MaxCPUThreadPercentage float64  `json:"maxCPUThreadPercentage"`
 	DefaultDirs            []string `json:"defaultDirs"`
 	ExtendedDirs           []string `json:"extendedDirs"`
 	ExcludeFromDefaultDirs Rules    `json:"excludeFromDefaultDirs"`
@@ -104,7 +104,7 @@ func resetConfig() error {
 	}
 
 	defaultConfig := ConfigJSONData{
-		MaxCPUThreadPercentage: 20, // percentage of threads that may be used, always rounding the threads up
+		MaxCPUThreadPercentage: 0.25, // percentage of threads that may be used, always rounding the threads up
 		DefaultDirs: []string{
 			fmt.Sprintf("%s/", homedir),
 		},

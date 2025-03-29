@@ -6,6 +6,9 @@ import (
 	"github.com/skillptm/Bolt/internal/util"
 )
 
+/*
+DirsRules holds name, path and regex rules determening the part of the cache a folder will be in
+*/
 type DirsRules struct {
 	name  []string
 	path  []string

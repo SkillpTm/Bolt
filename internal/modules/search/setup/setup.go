@@ -11,13 +11,7 @@ import (
 	"github.com/skillptm/Bolt/internal/util"
 )
 
-/*
-Setup validtes all files/folders we need exist
-
-Returns:
-
-	error: an error, if it fails to validate our folder/files.
-*/
+// Setup validtes all files/folders we need exist
 func Setup() error {
 	dirs := map[string]string{
 		"~./.config/bolt/config.json":     "~./.config/bolt/",
@@ -37,17 +31,7 @@ func Setup() error {
 	return nil
 }
 
-/*
-validateFolders checks, if our fodler in ~/.config/ and /var/lib/ exist
-
-Parameters:
-
-	dirsToCheck: slice of absolute paths to directories.
-
-Returns:
-
-	error: an error, if it fails to create a folder.
-*/
+// validateFolders checks, if our fodler in ~/.config/ and /var/lib/ exist
 func validateFolders(dirsToCheck []string) error {
 	for _, dir := range dirsToCheck {
 		if _, err := os.Stat(dir); !os.IsNotExist(err) {
@@ -63,17 +47,7 @@ func validateFolders(dirsToCheck []string) error {
 	return nil
 }
 
-/*
-validateFiles checks, if config.json and search-cache.json exist
-
-Parameters:
-
-	filesToCheck: slice of absolute paths to files.
-
-Returns:
-
-	error: an error, if it fails to create a file.
-*/
+// validateFiles checks, if config.json and search-cache.json exist
 func validateFiles(filesToCheck []string) error {
 	for _, file := range filesToCheck {
 		if _, err := os.Stat(file); !os.IsNotExist(err) {
@@ -93,13 +67,7 @@ func validateFiles(filesToCheck []string) error {
 	return nil
 }
 
-/*
-resetConfig resets the config file to the default settings
-
-Returns:
-
-	error: an error, if it fails reset the config file.
-*/
+// resetConfig resets the config file to the default settings
 func resetConfig() error {
 	defaultConfig := map[string]any{
 		"maxCPUThreadPercentage": 20, // percentage of threads that may be used, always rounding the threads up

@@ -7,18 +7,7 @@ import (
 	"os"
 )
 
-/*
-GetJSON will get the data from a JSON file and put it on a map
-
-Parameters:
-
-	filePath: absolute path to the JSON file.
-
-Returns:
-
-	map[string]any: a map of the data from the provided JSON file
-	error: an error, if a file operation on the provided JSON fails.
-*/
+// GetJSON will get the data from a JSON file and put it on a map
 func GetJSON(filePath string) (map[string]any, error) {
 	jsonData := map[string]any{}
 
@@ -43,18 +32,7 @@ func GetJSON(filePath string) (map[string]any, error) {
 	return jsonData, returnErr
 }
 
-/*
-OverwriteJSON will take a map with JSON data and the file path and overwrite the data in the existing file
-
-Parameters:
-
-	filePath: absolute path to the JSON file.
-	data: a map that will be used to fill the json file.
-
-Returns:
-
-	error: an error, if a file operation on the provided JSON fails.
-*/
+// OverwriteJSON will take a map with JSON data and the file path and overwrite the data in the existing file
 func OverwriteJSON(filePath string, data map[string]any) error {
 	jsonFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {

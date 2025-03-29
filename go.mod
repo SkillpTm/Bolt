@@ -1,6 +1,6 @@
 module github.com/skillptm/Bolt
 
-go 1.22.0
+go 1.24.1
 
 require (
 	github.com/getlantern/systray v1.2.2

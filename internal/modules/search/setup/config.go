@@ -2,22 +2,20 @@ package setup
 
 import (
 	"fmt"
+	"path"
+	"regexp"
 
 	"github.com/skillptm/Bolt/internal/util"
 )
 
-/*
-DirsRules holds name, path and regex rules determening the part of the cache a folder will be in
-*/
+// DirsRules holds name, path and regex rules determening the part of the cache a folder will be in
 type DirsRules struct {
-	name  []string
-	path  []string
+	name  map[string]bool
+	path  map[string]bool
 	regex []string
 }
 
-/*
-Config holds the data from the config.json
-*/
+// Config holds the data from the config.json
 type Config struct {
 	maxCPUThreadPercentage int
 	defaultDirs            DirsRules
@@ -26,14 +24,28 @@ type Config struct {
 	excludeDirs            DirsRules
 }
 
-/*
-NewConfig is the constructor for Config, it imports the data from ~./.config/bolt/config.json
+// Check finds out if the provided Directory breaks any of the name, path or regex rules
+func (dr *DirsRules) Check(dirPath string) (bool, error) {
+	if dr.path[dirPath] {
+		return false, nil
+	}
 
-Returns:
+	if dr.name[path.Base(dirPath)] {
+		return false, nil
+	}
 
-	*Config: pointer to Config with the data from the config.json
-	error: an error, if it fails to get the config data from config.json.
-*/
+	for _, pattern := range dr.regex {
+		if matched, err := regexp.MatchString(pattern, path.Base(dirPath)); matched {
+			return false, nil
+		} else if err != nil {
+			return false, fmt.Errorf("Check: couldn't match pattern %s:\n--> %w", pattern, err)
+		}
+	}
+
+	return true, nil
+}
+
+// NewConfig is the constructor for Config, it imports the data from ~./.config/bolt/config.json
 func NewConfig() (*Config, error) {
 	newConfig := Config{}
 
@@ -45,9 +57,19 @@ func NewConfig() (*Config, error) {
 	newConfig.maxCPUThreadPercentage = configMap["maxCPUThreadPercentage"].(int)
 
 	for key, value := range configMap {
+		names := map[string]bool{}
+		for _, name := range value.(map[string][]string)["name"] {
+			names[name] = true
+		}
+
+		paths := map[string]bool{}
+		for _, path := range value.(map[string][]string)["path"] {
+			paths[path] = true
+		}
+
 		rules := DirsRules{
-			value.(map[string][]string)["name"],
-			value.(map[string][]string)["path"],
+			names,
+			paths,
 			value.(map[string][]string)["regex"],
 		}
 

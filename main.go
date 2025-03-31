@@ -27,7 +27,7 @@ var (
 func main() {
 	appInstance, err := app.NewApp(images)
 	if err != nil {
-		log.Fatal(fmt.Errorf("main: couldn't create new app:\n--> %w", err))
+		log.Fatalf("main: couldn't create app:\n--> %s", err.Error())
 	}
 
 	onReady := func() {

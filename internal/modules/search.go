@@ -15,15 +15,16 @@ import (
 type SearchHandler struct {
 	fileSystem    *cache.Filesystem
 	forceStopChan chan bool
-	resultsChan   chan []string
 	searching     bool
+
+	ResultsChan chan []string
 }
 
 // NewSearchHandler is the constructor for SearchHandler, which also sets up the cache and the Filesystem
 func NewSearchHandler() (*SearchHandler, error) {
 	sh := SearchHandler{
 		forceStopChan: make(chan bool, 1),
-		resultsChan:   make(chan []string, 1),
+		ResultsChan:   make(chan []string, 1),
 		searching:     false,
 	}
 
@@ -74,7 +75,7 @@ func (sh *SearchHandler) Search(input string) {
 
 	// we only want to emit the results, if we got any and we have a search String to avoid updating to no results in the middle of typing
 	if len(result) > 0 && len(searchString) > 0 {
-		sh.resultsChan <- result
+		sh.ResultsChan <- result
 	}
 }
 

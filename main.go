@@ -1,56 +1,61 @@
 package main
 
-// <---------------------------------------------------------------------------------------------------->
-
 import (
 	"embed"
 	"fmt"
+	"log"
 
-	"github.com/getlantern/systray"
-	"github.com/skillptm/bws"
+	"fyne.io/systray"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/skillptm/Bolt/internal/app"
-	"github.com/skillptm/Bolt/internal/appmenu"
 )
 
-// <---------------------------------------------------------------------------------------------------->
-
-//go:embed frontend/dist/*
-var assets embed.FS
-
-//go:embed frontend/src/assets/images/*
-var images embed.FS
-
-//go:embed build/windows/icon.ico
-var icon embed.FS
-
-// <---------------------------------------------------------------------------------------------------->
+var (
+	//go:embed frontend/dist/*
+	assets embed.FS
+	//go:embed frontend/src/assets/images/*
+	images embed.FS
+	//go:embed build/windows/icon.ico
+	icon embed.FS
+)
 
 func main() {
-	bws.ForceUpdateCache()
-
 	appInstance, err := app.NewApp(images)
 	if err != nil {
-		fmt.Println("couldn't create new app: ", err.Error())
-		return
+		log.Fatal(fmt.Errorf("main: couldn't create new app:\n--> %w", err))
 	}
 
-	appmenu.AppIcon, err = icon.ReadFile("build/windows/icon.ico")
-	if err != nil {
-		fmt.Println("couldn't get image build/windows/icon.ico from embed: ", err.Error())
-		return
+	onReady := func() {
+		appIcon, err := icon.ReadFile("build/windows/icon.ico")
+		if err != nil {
+			log.Fatal(fmt.Errorf("main: couldn't get image build/windows/icon.ico from embed:\n--> %w", err))
+		}
+
+		systray.SetIcon(appIcon)
+		systray.SetTooltip("Bolt")
+		open := systray.AddMenuItem("Open", "opens bolt search")
+		quit := systray.AddMenuItem("Quit", "quits bolt search")
+
+		for {
+			select {
+			case <-open.ClickedCh:
+				runtime.WindowShow(appInstance.CTX)
+			case <-quit.ClickedCh:
+				systray.Quit()
+				runtime.Quit(appInstance.CTX)
+			}
+		}
 	}
 
-	appmenu.AppInstance = appInstance
-
-	go systray.Run(appmenu.OnReady, func() {})
+	go systray.Run(onReady, func() {})
 
 	err = wails.Run(&options.App{
-		Title:             "Quick Search",
+		Title:             "Bolt",
 		Width:             570,
 		Height:            45,
 		DisableResize:     true,
@@ -58,18 +63,17 @@ func main() {
 		HideWindowOnClose: true,
 		AlwaysOnTop:       true,
 		StartHidden:       true,
-		Menu:              appmenu.Get(),
 		LogLevel:          logger.INFO,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
 		OnStartup: appInstance.Startup,
-		Bind: []interface{}{
+		Bind: []any{
 			appInstance,
 		},
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		log.Fatal(err.Error())
 	}
 }

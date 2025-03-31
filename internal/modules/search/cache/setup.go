@@ -1,11 +1,9 @@
-// Package setup ensures folders and files needed through the filesystem (like cache and config) are setup
-package setup
+// Package cache handles everything that has to do with the generation of the cache for the Search function, to the generation of our folder structure and importing of the config.
+package cache
 
 import (
 	"fmt"
-	"maps"
 	"os"
-	"slices"
 	"strings"
 
 	"github.com/skillptm/Bolt/internal/util"
@@ -27,31 +25,32 @@ type Rules struct {
 	Regex []string `json:"regex"`
 }
 
-// Setup validates all files/folders we need to exist
-func Setup() error {
+// setupFolders validates all files/folders we need to exist
+func setupFolders() error {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
-		return fmt.Errorf("Setup: couldn't access the user's cache dir:\n--> %w", err)
+		return fmt.Errorf("setupFolders: couldn't access the user's cache dir:\n--> %w", err)
 	}
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return fmt.Errorf("Setup: couldn't access the user's config dir:\n--> %w", err)
+		return fmt.Errorf("setupFolders: couldn't access the user's config dir:\n--> %w", err)
 	}
 
-	dirs := map[string]string{
-		fmt.Sprintf("%s/bolt/search-cache.json", cacheDir): fmt.Sprintf("%s/bolt/", cacheDir),
-		fmt.Sprintf("%s/bolt/config.json", configDir):      fmt.Sprintf("%s/bolt/", configDir),
-	}
-
-	err = validateFolders(slices.Collect(maps.Values(dirs)))
+	err = validateFolders([]string{
+		fmt.Sprintf("%s/bolt/", cacheDir),
+		fmt.Sprintf("%s/bolt/", configDir),
+	})
 	if err != nil {
-		return fmt.Errorf("Setup: couldn't validate default folders:\n--> %w", err)
+		return fmt.Errorf("setupFolders: couldn't validate default folders:\n--> %w", err)
 	}
 
-	err = validateFiles(slices.Collect(maps.Keys(dirs)))
+	err = validateFiles([]string{
+		fmt.Sprintf("%s/bolt/search-cache.json", cacheDir),
+		fmt.Sprintf("%s/bolt/config.json", configDir),
+	})
 	if err != nil {
-		return fmt.Errorf("Setup: couldn't validate default files:\n--> %w", err)
+		return fmt.Errorf("setupFolders: couldn't validate default files:\n--> %w", err)
 	}
 
 	return nil
@@ -117,7 +116,7 @@ func resetConfig() error {
 			Name: []string{},
 			Path: []string{},
 			Regex: []string{
-				`^\..+`,
+				fmt.Sprintf(`^%s/\.[^/]+/?$`, homedir),
 			},
 		},
 		ExcludeDirs: Rules{

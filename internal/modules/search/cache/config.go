@@ -1,4 +1,5 @@
-package setup
+// Package cache handles everything that has to do with the generation of the cache for the Search function, to the generation of our folder structure and importing of the config.
+package cache
 
 import (
 	"fmt"
@@ -7,38 +8,51 @@ import (
 	"path"
 	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/skillptm/Bolt/internal/util"
 )
 
 // DirsRules holds name, path and regex rules determening the part of the cache a folder will be in
 type DirsRules struct {
-	name  map[string]bool
-	path  map[string]bool
-	regex []string
+	Name  map[string]bool
+	Path  map[string]bool
+	Regex []string
 }
 
-// Config holds the data from the config.json
-type Config struct {
-	MaxCPUThreads          int
-	DefaultDirs            []string
-	ExtendedDirs           []string
-	ExcludeFromDefaultDirs DirsRules
-	ExcludeDirs            DirsRules
+// config holds the data from the config.json
+type config struct {
+	maxCPUThreads          int
+	defaultDirs            map[string]bool
+	extendedDirs           map[string]bool
+	excludeFromDefaultDirs DirsRules
+	excludeDirs            DirsRules
 }
 
 // Check finds out if the provided Directory breaks any of the name, path or regex rules
-func (dr *DirsRules) Check(dirPath string) (bool, error) {
-	if dr.path[dirPath] {
+func (dr *DirsRules) Check(dirPath string, add bool, dirs *Dirs) (bool, error) {
+	addPath := func() {
+		if !add {
+			return
+		}
+		dirs.Mu.Lock()
+		dirs.BaseDirs[dirPath] = true
+		dirs.Mu.Unlock()
+	}
+
+	if dr.Path[dirPath] {
+		addPath()
 		return false, nil
 	}
 
-	if dr.name[path.Base(dirPath)] {
+	if dr.Name[path.Base(dirPath)] {
+		addPath()
 		return false, nil
 	}
 
-	for _, pattern := range dr.regex {
-		if matched, err := regexp.MatchString(pattern, path.Base(dirPath)); matched {
+	for _, pattern := range dr.Regex {
+		if matched, err := regexp.MatchString(pattern, dirPath); matched {
+			addPath()
 			return false, nil
 		} else if err != nil {
 			return false, fmt.Errorf("Check: couldn't match pattern %s:\n--> %w", pattern, err)
@@ -48,60 +62,64 @@ func (dr *DirsRules) Check(dirPath string) (bool, error) {
 	return true, nil
 }
 
-// NewConfig is the constructor for Config, it imports the data from ~./.config/bolt/config.json
-func NewConfig() (*Config, error) {
-	newConfig := Config{}
+// newConfig is the constructor for Config, it imports the data from ~./.config/bolt/config.json
+func newConfig() (*config, error) {
+	newConfig := config{}
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return &newConfig, fmt.Errorf("NewConfig: couldn't access the user's config dir:\n--> %w", err)
+		return &newConfig, fmt.Errorf("newConfig: couldn't access the user's config dir:\n--> %w", err)
 	}
 
 	configMap, err := util.GetJSON(fmt.Sprintf("%s/bolt/config.json", configDir))
 	if err != nil {
-		return &newConfig, fmt.Errorf("New: couldn't get JSON map:\n--> %w", err)
+		return &newConfig, fmt.Errorf("newConfig: couldn't get JSON map:\n--> %w", err)
 	}
 
-	newConfig.MaxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * configMap["maxCPUThreadPercentage"].(float64)))
+	getPathsMap := func(value []any) map[string]bool {
+		output := make(map[string]bool)
+
+		for _, dir := range value {
+			if !strings.HasSuffix(dir.(string), "/") {
+				dir = fmt.Sprintf("%s/", dir.(string))
+			}
+
+			output[dir.(string)] = true
+		}
+
+		return output
+	}
+
+	getDirsRules := func(value any) DirsRules {
+		rules := DirsRules{
+			make(map[string]bool),
+			getPathsMap(value.(map[string]any)["path"].([]any)),
+			[]string{},
+		}
+
+		for _, name := range value.(map[string]any)["name"].([]any) {
+			rules.Name[name.(string)] = true
+		}
+
+		for _, regex := range value.(map[string]any)["regex"].([]any) {
+			rules.Regex = append(rules.Regex, regex.(string))
+		}
+
+		return rules
+	}
 
 	for key, value := range configMap {
-		getStrings := func(input any) []string {
-			dirs := []string{}
-			for _, dir := range input.([]any) {
-				dirs = append(dirs, dir.(string))
-			}
-			return dirs
-		}
-
-		getDirsRules := func() DirsRules {
-			names := map[string]bool{}
-			for _, name := range value.(map[string]any)["name"].([]any) {
-				names[name.(string)] = true
-			}
-
-			paths := map[string]bool{}
-			for _, path := range value.(map[string]any)["path"].([]any) {
-				paths[path.(string)] = true
-			}
-
-			rules := DirsRules{
-				names,
-				paths,
-				getStrings(value.(map[string]any)["regex"]),
-			}
-
-			return rules
-		}
-
 		switch key {
+		case "maxCPUThreadPercentage":
+			newConfig.maxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * configMap["maxCPUThreadPercentage"].(float64)))
 		case "defaultDirs":
-			newConfig.DefaultDirs = getStrings(value)
+			newConfig.defaultDirs = getPathsMap(value.([]any))
 		case "extendedDirs":
-			newConfig.ExtendedDirs = getStrings(value)
+			newConfig.extendedDirs = getPathsMap(value.([]any))
 		case "excludeFromDefaultDirs":
-			newConfig.ExcludeFromDefaultDirs = getDirsRules()
+			newConfig.excludeFromDefaultDirs = getDirsRules(value)
 		case "excludeDirs":
-			newConfig.ExcludeDirs = getDirsRules()
+			newConfig.excludeDirs = getDirsRules(value)
 		}
 	}
 

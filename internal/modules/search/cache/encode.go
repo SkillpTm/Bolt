@@ -1,4 +1,4 @@
-// Package cache handles everything that has to do with the generation of the cache for the Search function.
+// Package cache handles everything that has to do with the generation of the cache for the Search function, to the generation of our folder structure and importing of the config.
 package cache
 
 import (
@@ -45,8 +45,8 @@ func Encode(input string) [8]byte {
 	return output
 }
 
-// CompareBytes checks if all required letters from the search string are inside the searched string
-func CompareBytes(searchBytes [8]byte, compareBytes [8]byte) bool {
+// CompareEncoding checks, if all required letters from the search string are inside the searched string
+func CompareEncoding(searchBytes [8]byte, compareBytes [8]byte) bool {
 	for index := range searchBytes {
 		if searchBytes[index]&^compareBytes[index] != 0 {
 			// if we ever reach here it means that one of the relevant bits wasn't flipped

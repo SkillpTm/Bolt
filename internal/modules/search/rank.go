@@ -1,152 +1,64 @@
-// Package search handles the search through the cache and the ranking of the results.
+// Package search handles the search, aswell as ranking and sorting of the results.
 package search
 
 import (
 	"io/fs"
-	"math"
-	"os"
-	"sync"
+	"strings"
 	"time"
-
-	"github.com/skillptm/Bolt/internal/modules/search/config"
 )
 
 const (
-	minimumFileSize    int64 = 100 // in bytes
-	fourYearsInSeconds int64 = 4 * 365.25 * 24 * 60 * 60
+	fourYearsInSeconds int   = 4 * 365.25 * 24 * 60 * 60
+	minimumSizeAmount  int64 = 100 // in bytes
 
-	exactMatchModifier    int     = 500
-	minimumSizeModifier   int     = 25
-	timeSinceMaxModifier  float64 = 200
-	nameLengthMaxModifier float64 = 100
+	exactMatch          int     = 500
+	subStringEarlyMax   int     = 325
+	recentlyModifiedMax float64 = 250
+	notDeeplyNestedMax  int     = 150
+	lengthDifferenceMax float64 = 125
+	inDefaultDirs       int     = 75
+	minimumSize         int     = 25
 )
 
-// RankedFile holds the points given to a file and it's full path
-type RankedFile struct {
+// rankedFile holds the points given to a file and it's full path
+type rankedFile struct {
 	path   string
 	points int
 }
 
-// newRankedFile constructs a RankedFile and ranks it based on: exact match, minimum file size,
-func newRankedFile(fileInfo fs.FileInfo, file []string, pattern *SearchString) *RankedFile {
-	newFile := RankedFile{path: file[0]}
+// newRankedFile constructor for rankedFile
+func newRankedFile(fileInfo fs.FileInfo, file []string, filePath string, pattern *SearchString, defaultDirs map[string]bool) *rankedFile {
+	newFile := rankedFile{filePath, 0}
 
-	// check if the searchString and the file name are an exact match (except for case)
 	if file[1] == pattern.name {
-		newFile.points += exactMatchModifier
+		newFile.points += exactMatch
 	}
 
-	// check if the size is of a minimum file size
-	if fileInfo.Size() > minimumFileSize {
-		newFile.points += minimumSizeModifier
+	newFile.points += subStringEarlyMax - (10 * strings.Index(strings.ToLower(file[1]), pattern.name))
+
+	modifiedSecondsAgo := min(time.Now().UTC().Unix()-fileInfo.ModTime().UTC().Unix(), int64(fourYearsInSeconds))
+	newFile.points += int(recentlyModifiedMax * (1 - float64(modifiedSecondsAgo)/float64(fourYearsInSeconds)))
+
+	newFile.points += notDeeplyNestedMax + (-10 * strings.Count(file[0], "/"))
+
+	newFile.points += int(lengthDifferenceMax * float64(len(pattern.name)) / float64(len(file[1])))
+
+	for dir := range defaultDirs {
+		if strings.HasPrefix(file[0], dir) {
+			newFile.points += inDefaultDirs
+			break
+		}
 	}
 
-	timeSinceMod := time.Now().UTC().Unix() - fileInfo.ModTime().UTC().Unix()
-
-	// rank how long ago the file was last modified (longer ago = worse)
-	if timeSinceMod > fourYearsInSeconds {
-		newFile.points += 0
-	} else {
-
-		timeSinceReduction := 1 - math.Round(float64(timeSinceMod)/float64(fourYearsInSeconds)*math.Pow(10, 2))/math.Pow(10, 2)
-
-		newFile.points += int(timeSinceMaxModifier * timeSinceReduction)
+	if fileInfo.Size() > minimumSizeAmount {
+		newFile.points += minimumSize
 	}
-
-	// rank how long the filename is compared to the searchString (longer = worse)
-	nameLengthReduction := math.Round(float64(pattern.length)/float64(len(file[1]))*math.Pow(10, 2)) / math.Pow(10, 2)
-	newFile.points += int(nameLengthMaxModifier * nameLengthReduction)
 
 	return &newFile
 }
 
-// Rank ranks and sorts the results
-func Rank(searchResults *[][]string, pattern *SearchString, forceStopChan chan bool) *[]string {
-	output := []string{}
-	rankedFiles := []RankedFile{}
-
-	if len(*searchResults) < 1 {
-		return &output
-	}
-
-	var wg sync.WaitGroup
-
-	// 10000000 is the channel size, because we just need a ridiculously large channel to store all the results
-	toRankChan := make(chan *[]string, 10000000)
-	rankedChan := make(chan *RankedFile, 10000000)
-	breakChan := make(chan bool, config.BWSConfig.CPUThreads*config.BWSConfig.CPUThreads)
-
-	// we add all the results in the channel before starting the goroutines to avoid race conditions
-	for _, file := range *searchResults {
-		toRankChan <- &file
-	}
-
-	for range config.BWSConfig.CPUThreads {
-		wg.Add(1)
-		go rankResults(toRankChan, rankedChan, breakChan, pattern, &wg, forceStopChan)
-	}
-
-	wg.Wait()
-
-	close(toRankChan)
-	close(rankedChan)
-	close(breakChan)
-
-	// check if we have to stop the baseSearch
-	if len(forceStopChan) > 0 {
-		return &output
-	}
-
-	for file := range rankedChan {
-		rankedFiles = append(rankedFiles, *file)
-	}
-
-	// sort the results
-	quickSort(rankedFiles)
-
-	// put the ranked and sorted paths onto the output
-	for _, file := range rankedFiles {
-		output = append(output, file.path)
-	}
-
-	return &output
-}
-
-// rankResults takes the results from toRankChan, ranks them and inserts a pointer to them into rankedChan
-func rankResults(toRankChan <-chan *[]string, rankedChan chan<- *RankedFile, breakChan chan bool, pattern *SearchString, wg *sync.WaitGroup, forceStopChan chan bool) {
-	defer wg.Done()
-
-	for {
-		select {
-		case file := <-toRankChan:
-			// check if we have to stop the baseSearch
-			if len(forceStopChan) > 0 {
-				return
-			}
-
-			fileInfo, err := os.Stat((*file)[0])
-			if err != nil {
-				// if we error it's most likely the file doesn't exist anymore, so we skip it
-				continue
-			}
-
-			rankedChan <- newRankedFile(fileInfo, *file, pattern)
-
-			if len(toRankChan) < 1 {
-				for range config.BWSConfig.CPUThreads {
-					breakChan <- true
-				}
-				return
-			}
-
-		case <-breakChan:
-			return
-		}
-	}
-}
-
-// quickSort is an implmentation of the quick sort alogirthm that sorts our ranked files based on their points
-func quickSort(rankedFiles []RankedFile) {
+// quickSort is an implmentation of the quick sort alogirthm that sorts the ranked files based on their points
+func quickSort(rankedFiles []rankedFile) {
 	if len(rankedFiles) <= 1 {
 		return
 	}

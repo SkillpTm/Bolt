@@ -1,110 +1,148 @@
-// Package search handles the search through the cache and the ranking of the results.
+// Package search handles the search, aswell as ranking and sorting of the results.
 package search
 
-// <---------------------------------------------------------------------------------------------------->
-
 import (
+	"fmt"
+	"maps"
+	"os"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/skillptm/Bolt/internal/modules/search/cache"
 )
-
-// <---------------------------------------------------------------------------------------------------->
 
 // SearchString holds all the data releated to the searchString input, so we only have to calculate them once
 type SearchString struct {
 	encoded    [8]byte
 	extensions []string
-	length     int
 	name       string
 }
 
 // NewSearchString returns a pointer to a SearchString struct based on the string input
 func NewSearchString(searchString string, fileExtensions []string) *SearchString {
-	// make sure all extensions begin with a period, unless it's a "File" or a "Folder"
-	for index, element := range fileExtensions {
-		if len(element) < 1 {
-			// pop empty strings
-			fileExtensions = append(fileExtensions[:index], fileExtensions[index+1:]...)
+	properExtensions := []string{}
+
+	// make sure all extensions begin with a period, unless it's "Folder"
+	for _, element := range fileExtensions {
+		if element == "" {
 			continue
 		}
 
-		// ensure "File"/"Folder" have the right case
-		if element == "file" || element == "folder" {
-			fileExtensions[index] = "F" + element[1:]
-			element = "F" + element[1:]
+		// ensure "Folder" has the right case
+		if element == "folder" {
+			element = "Folder"
 		}
 
-		if !strings.HasPrefix(element, ".") && element != "File" && element != "Folder" {
-			fileExtensions[index] = "." + element
-			continue
+		if !strings.HasPrefix(element, ".") && element != "Folder" {
+			element = "." + element
 		}
+
+		properExtensions = append(properExtensions, element)
 	}
 
 	return &SearchString{
 		encoded:    cache.Encode(searchString),
-		extensions: fileExtensions,
-		length:     len(searchString),
+		extensions: properExtensions,
 		name:       strings.ToLower(searchString),
 	}
 }
 
-// Start wraps around the walkFS function and returns all the results from the MainDirs and SecondaryDirs
-func Start(pattern *SearchString, extendedSearch bool, forceStopChan chan bool) (*[][]string, *SearchString) {
-	output := [][]string{}
-
-	// check the MainDirs for the search string
-	output = append(output, *pattern.searchFS(&cache.EntrieFilesystem.MainDirs, forceStopChan)...)
-
-	// check the SecondaryDirs for the search string
-	if extendedSearch {
-		output = append(output, *pattern.searchFS(&cache.EntrieFilesystem.SecondaryDirs, forceStopChan)...)
+// Start wraps around searchFS and then also sorts and ranks the results. The forceStopChan can search it to end it's search early. This will make it yield no results.
+func Start(searchString string, fileExtensions []string, fs *cache.Filesystem, extendedSearch bool, forceStopChan chan bool) []string {
+	if len(searchString) < 1 {
+		return []string{}
 	}
 
-	return &output, pattern
-}
+	output := []string{}
+	pattern := NewSearchString(searchString, fileExtensions)
+	foundFilesChan := make(chan *[]string, 10000000)
+	rankedFiles := []rankedFile{}
+	wg := sync.WaitGroup{}
 
-// searchFS searches one of the provided FileSystem maps, while skiping files for wrong extensions and ecoded values
-func (searchString *SearchString) searchFS(dirs *map[string]map[int][][]interface{}, forceStopChan chan bool) *[][]string {
-	output := [][]string{}
+	wg.Add(1)
+	go pattern.searchFS(&fs.DefaultDirs, foundFilesChan, forceStopChan, &wg)
 
-	// loop over the extensions
-	for extension, lengthMaps := range *dirs {
-		// check if extensions were provided and if so, if the current extension is a provided one
-		if len(searchString.extensions) > 0 && !slices.Contains(searchString.extensions, extension) {
+	if extendedSearch {
+		wg.Add(1)
+		go pattern.searchFS(&fs.ExtendedDirs, foundFilesChan, forceStopChan, &wg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(foundFilesChan)
+	}()
+
+	for foundFile := range foundFilesChan {
+		if len(forceStopChan) > 0 {
+			return output
+		}
+		fullPath := ""
+
+		if (*foundFile)[2] != "Folder" {
+			fullPath = fmt.Sprintf("%s%s%s", (*foundFile)[0], (*foundFile)[1], (*foundFile)[2])
+		} else {
+			fullPath = (*foundFile)[0]
+		}
+
+		fileInfo, err := os.Stat(fullPath)
+		// if we error, it's most likely the file doesn't exist anymore, so we skip it
+		if err != nil {
 			continue
 		}
 
-		// loop over the filename lengths
-		for length, fileSlices := range lengthMaps {
-			// check if the filename is longer than the searchString
-			if length < searchString.length {
+		rankedFiles = append(rankedFiles, *newRankedFile(fileInfo, *foundFile, fullPath, pattern, fs.DefaultDirs.BaseDirs))
+	}
+
+	if len(forceStopChan) > 0 {
+		return output
+	}
+
+	quickSort(rankedFiles)
+
+	for _, rankedFile := range rankedFiles {
+		output = append(output, rankedFile.path)
+	}
+
+	return output
+}
+
+// searchFS searches one of the provided FileSystem maps, while skiping files for wrong extensions and ecoded values
+func (searchString *SearchString) searchFS(dirs *cache.Dirs, foundFilesChan chan<- *[]string, forceStopChan chan bool, wg *sync.WaitGroup) {
+	defer wg.Done()
+	extensionsToCheck := []string{}
+
+	if len(searchString.extensions) > 0 {
+		for _, searchExt := range searchString.extensions {
+			if _, ok := dirs.DirMap[searchExt]; ok {
+				extensionsToCheck = append(extensionsToCheck, searchExt)
+			}
+		}
+	} else {
+		extensionsToCheck = slices.Collect(maps.Keys(dirs.DirMap))
+	}
+
+	for _, extension := range extensionsToCheck {
+		for length, files := range dirs.DirMap[extension] {
+			if length < len(searchString.name) {
 				continue
 			}
 
-			// loop over the actual files
-			for _, file := range fileSlices {
-				// check if we have to stop the baseSearch
+			for _, file := range files {
 				if len(forceStopChan) > 0 {
-					return &output
+					return
 				}
 
-				// check if all required letters are inside the filename
-				if !cache.CompareBytes(searchString.encoded, file[2].([8]byte)) {
+				if !cache.CompareEncoding(searchString.encoded, file.EncodedName) {
 					continue
 				}
 
-				// do a substring search over the filename
-				if !strings.Contains(file[1].(string), searchString.name) {
+				if !strings.Contains(strings.ToLower(file.Name), searchString.name) {
 					continue
 				}
 
-				// if the searchString is inside the filename add it's path and name to the output
-				output = append(output, []string{file[0].(string), file[1].(string)})
+				foundFilesChan <- &[]string{dirs.Paths[file.PathKey], file.Name, extension}
 			}
 		}
 	}
-
-	return &output
 }

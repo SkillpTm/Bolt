@@ -49,7 +49,7 @@ func NewSearchString(searchString string, fileExtensions []string) *SearchString
 }
 
 // Start wraps around searchFS and then also sorts and ranks the results. The forceStopChan can search it to end it's search early. This will make it yield no results.
-func Start(searchString string, fileExtensions []string, fs *cache.Filesystem, extendedSearch bool, forceStopChan chan bool) []string {
+func Start(searchString string, fileExtensions []string, extendedSearch bool, fs *cache.Filesystem, forceStopChan chan bool) []string {
 	if len(searchString) < 1 {
 		return []string{}
 	}

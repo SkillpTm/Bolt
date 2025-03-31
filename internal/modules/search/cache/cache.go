@@ -13,11 +13,11 @@ import (
 
 // Filesystem stores some metadata for our searches, aswell as the cache of files on the system
 type Filesystem struct {
-	MaxCPUThreads          int
+	DefaultDirs            Dirs
 	ExcludedDirs           DirsRules
 	ExcludeFromDefaultDirs DirsRules
-	DefaultDirs            Dirs
 	ExtendedDirs           Dirs
+	MaxCPUThreads          int
 }
 
 /*
@@ -29,9 +29,9 @@ paths: map[unique ID]Absolute Path
 dirMap: map[File Extension]map[File Length][]File{encodedName, Name, pathKey}
 */
 type Dirs struct {
-	Mu       sync.Mutex
 	DirMap   map[string]map[int][]File
 	BaseDirs map[string]bool
+	Mu       sync.Mutex
 	Paths    map[int]string
 }
 
@@ -63,19 +63,19 @@ func NewFilesystem() (*Filesystem, error) {
 	}
 
 	fs := Filesystem{
-		MaxCPUThreads:          config.maxCPUThreads,
-		ExcludedDirs:           config.excludeDirs,
-		ExcludeFromDefaultDirs: config.excludeFromDefaultDirs,
 		DefaultDirs: Dirs{
 			Paths:    make(map[int]string),
 			BaseDirs: config.defaultDirs,
 			DirMap:   make(map[string]map[int][]File),
 		},
+		ExcludedDirs:           config.excludeDirs,
+		ExcludeFromDefaultDirs: config.excludeFromDefaultDirs,
 		ExtendedDirs: Dirs{
 			Paths:    make(map[int]string),
 			BaseDirs: config.extendedDirs,
 			DirMap:   make(map[string]map[int][]File),
 		},
+		MaxCPUThreads: config.maxCPUThreads,
 	}
 
 	fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)

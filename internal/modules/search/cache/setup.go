@@ -11,18 +11,20 @@ import (
 
 // ConfigJSONData is made to structer and order the data for the config.json
 type ConfigJSONData struct {
-	MaxCPUThreadPercentage float64  `json:"maxCPUThreadPercentage"`
-	DefaultDirs            []string `json:"defaultDirs"`
-	ExtendedDirs           []string `json:"extendedDirs"`
-	ExcludeFromDefaultDirs Rules    `json:"excludeFromDefaultDirs"`
-	ExcludeDirs            Rules    `json:"excludeDirs"`
+	MaxCPUThreadPercentage      float64  `json:"MaxCPUThreadPercentage"`
+	DefaultDirsCacheUpdateTime  int      `json:"DefaultDirsCacheUpdateTime"`
+	ExtendedDirsCacheUpdateTime int      `json:"ExtendedDirsCacheUpdateTime"`
+	DefaultDirs                 []string `json:"DefaultDirs"`
+	ExtendedDirs                []string `json:"ExtendedDirs"`
+	ExcludeFromDefaultDirs      Rules    `json:"ExcludeFromDefaultDirs"`
+	ExcludeDirs                 Rules    `json:"ExcludeDirs"`
 }
 
 // Rules is made to structer and order the data for the config.json
 type Rules struct {
-	Name  []string `json:"name"`
-	Path  []string `json:"path"`
-	Regex []string `json:"regex"`
+	Name  []string `json:"Name"`
+	Path  []string `json:"Path"`
+	Regex []string `json:"Regex"`
 }
 
 // setupFolders validates all files/folders we need to exist
@@ -105,7 +107,9 @@ func resetConfig() error {
 	}
 
 	defaultConfig := ConfigJSONData{
-		MaxCPUThreadPercentage: 0.25, // percentage of threads that may be used, always rounding the threads up
+		MaxCPUThreadPercentage:      0.25, // percentage of threads that may be used, always rounding the threads up
+		DefaultDirsCacheUpdateTime:  30,   // in seconds
+		ExtendedDirsCacheUpdateTime: 600,  // in seconds
 		DefaultDirs: []string{
 			fmt.Sprintf("%s/", homedir),
 		},

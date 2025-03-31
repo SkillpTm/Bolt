@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Filesystem stores some metadata for our searches, aswell as the cache of files on the system
@@ -79,7 +81,28 @@ func NewFilesystem() (*Filesystem, error) {
 	fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
 	fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
 
+	go fs.autoUpdateCache(config.defaultDirsCacheUpdateTime, config.extendedDirsCacheUpdateTime)
+
 	return &fs, nil
+}
+
+func (fs *Filesystem) autoUpdateCache(defaultTime int, extendedTime int) {
+	defaultTicker := time.NewTicker(time.Duration(defaultTime) * time.Second)
+	defer defaultTicker.Stop()
+
+	extendedTicker := time.NewTicker(time.Duration(extendedTime) * time.Second)
+	defer extendedTicker.Stop()
+
+	for {
+		select {
+		case <-defaultTicker.C:
+			fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
+		case <-extendedTicker.C:
+			fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
+		}
+
+		runtime.GC()
+	}
 }
 
 // Update launches the traversing of the dirs and later starts the adding of the results onto the fs

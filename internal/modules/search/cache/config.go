@@ -22,11 +22,13 @@ type DirsRules struct {
 
 // config holds the data from the config.json
 type config struct {
-	maxCPUThreads          int
-	defaultDirs            map[string]bool
-	extendedDirs           map[string]bool
-	excludeFromDefaultDirs DirsRules
-	excludeDirs            DirsRules
+	maxCPUThreads               int
+	defaultDirsCacheUpdateTime  int
+	extendedDirsCacheUpdateTime int
+	defaultDirs                 map[string]bool
+	extendedDirs                map[string]bool
+	excludeFromDefaultDirs      DirsRules
+	excludeDirs                 DirsRules
 }
 
 // Check finds out if the provided Directory breaks any of the name, path or regex rules
@@ -93,15 +95,15 @@ func newConfig() (*config, error) {
 	getDirsRules := func(value any) DirsRules {
 		rules := DirsRules{
 			make(map[string]bool),
-			getPathsMap(value.(map[string]any)["path"].([]any)),
+			getPathsMap(value.(map[string]any)["Path"].([]any)),
 			[]string{},
 		}
 
-		for _, name := range value.(map[string]any)["name"].([]any) {
+		for _, name := range value.(map[string]any)["Name"].([]any) {
 			rules.Name[name.(string)] = true
 		}
 
-		for _, regex := range value.(map[string]any)["regex"].([]any) {
+		for _, regex := range value.(map[string]any)["Regex"].([]any) {
 			rules.Regex = append(rules.Regex, regex.(string))
 		}
 
@@ -110,15 +112,19 @@ func newConfig() (*config, error) {
 
 	for key, value := range configMap {
 		switch key {
-		case "maxCPUThreadPercentage":
-			newConfig.maxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * configMap["maxCPUThreadPercentage"].(float64)))
-		case "defaultDirs":
+		case "MaxCPUThreadPercentage":
+			newConfig.maxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * configMap["MaxCPUThreadPercentage"].(float64)))
+		case "DefaultDirsCacheUpdateTime":
+			newConfig.defaultDirsCacheUpdateTime = int(configMap["DefaultDirsCacheUpdateTime"].(float64))
+		case "ExtendedDirsCacheUpdateTime":
+			newConfig.extendedDirsCacheUpdateTime = int(configMap["ExtendedDirsCacheUpdateTime"].(float64))
+		case "DefaultDirs":
 			newConfig.defaultDirs = getPathsMap(value.([]any))
-		case "extendedDirs":
+		case "ExtendedDirs":
 			newConfig.extendedDirs = getPathsMap(value.([]any))
-		case "excludeFromDefaultDirs":
+		case "ExcludeFromDefaultDirs":
 			newConfig.excludeFromDefaultDirs = getDirsRules(value)
-		case "excludeDirs":
+		case "ExcludeDirs":
 			newConfig.excludeDirs = getDirsRules(value)
 		}
 	}

@@ -48,7 +48,7 @@ func setupFolders() error {
 	}
 
 	err = validateFiles([]string{
-		fmt.Sprintf("%s/bolt/search-cache.json", cacheDir),
+		fmt.Sprintf("%s/bolt/search_cache.json", cacheDir),
 		fmt.Sprintf("%s/bolt/config.json", configDir),
 	})
 	if err != nil {
@@ -74,7 +74,7 @@ func validateFolders(dirsToCheck []string) error {
 	return nil
 }
 
-// validateFiles checks, if config.json and search-cache.json exist
+// validateFiles checks, if config.json and search_cache.json exist
 func validateFiles(filesToCheck []string) error {
 	for _, file := range filesToCheck {
 		if _, err := os.Stat(file); !os.IsNotExist(err) {

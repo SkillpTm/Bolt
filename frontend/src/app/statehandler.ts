@@ -30,6 +30,8 @@ class StateHandler {
                 await this.openFile(this.searchMode.getHoveredFile(comp));
             });
         });
+
+        this.reset()
     }
 
     reset(): void {

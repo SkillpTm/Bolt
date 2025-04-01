@@ -8,7 +8,6 @@ import { EventsOn, WindowHide } from "../wailsjs/runtime/runtime";
 import { StateHandler } from "./app/statehandler";
 
 const stateHandler = new StateHandler();
-stateHandler.reset();
 
 // disable right click
 document.oncontextmenu = () => {

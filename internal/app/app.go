@@ -94,7 +94,6 @@ func (a *App) openOnHotKey() {
 
 	for range openHotkey.Keydown() {
 		runtime.WindowShow(a.CTX)
-		runtime.WindowReload(a.CTX)
 	}
 }
 

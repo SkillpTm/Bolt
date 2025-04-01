@@ -20,7 +20,7 @@ var (
 	assets embed.FS
 	//go:embed frontend/src/assets/images/*
 	images embed.FS
-	//go:embed build/windows/icon.ico
+	//go:embed build/appicon.png
 	icon embed.FS
 )
 
@@ -31,9 +31,9 @@ func main() {
 	}
 
 	onReady := func() {
-		appIcon, err := icon.ReadFile("build/windows/icon.ico")
+		appIcon, err := icon.ReadFile("build/appicon.png")
 		if err != nil {
-			log.Fatal(fmt.Errorf("main: couldn't get image build/windows/icon.ico from embed:\n--> %w", err))
+			log.Fatal(fmt.Errorf("main: couldn't get image build/appicon.png from embed:\n--> %w", err))
 		}
 
 		systray.SetIcon(appIcon)
@@ -58,11 +58,14 @@ func main() {
 		Title:             "Bolt",
 		Width:             570,
 		Height:            45,
-		DisableResize:     true,
 		Frameless:         true,
 		HideWindowOnClose: true,
 		AlwaysOnTop:       true,
 		StartHidden:       true,
+		MinWidth:          570,
+		MaxWidth:          570,
+		MinHeight:         45,
+		MaxHeight:         365,
 		LogLevel:          logger.INFO,
 		AssetServer: &assetserver.Options{
 			Assets: assets,

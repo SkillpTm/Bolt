@@ -1,5 +1,6 @@
 export { UIHandler, type Component };
 
+import { GetImageData } from "../../wailsjs/go/app/App";
 import { WindowSetSize } from "../../wailsjs/runtime/runtime";
 
 /**
@@ -77,11 +78,18 @@ class UIHandler {
      * @param max the maximum components the app should be able to display, minimum 3
      */
     constructor(max: number) {
+        this.getImageData();
+
         if (max < 3) {
             max = 3;
         }
 
         this.#regenerateComponents(max);
+    }
+
+    async getImageData() {
+        let temp: Record<string, string> = await GetImageData();
+        this.images = new Map(Object.entries(temp));
     }
 
     /**

@@ -8,6 +8,7 @@ import { EventsOn, WindowHide } from "../wailsjs/runtime/runtime";
 import { StateHandler } from "./app/statehandler";
 
 const stateHandler = new StateHandler();
+stateHandler.reset();
 
 // disable right click
 document.oncontextmenu = () => {
@@ -30,6 +31,7 @@ stateHandler.uiHandler.searchBar.addEventListener("blur", () => {
     setTimeout(() => {
         if (document.activeElement === stateHandler.uiHandler.searchBar) {
             WindowHide();
+            stateHandler.reset();
         }
       }, 50);
 }),
@@ -51,11 +53,6 @@ document.addEventListener("keydown", async (event) => {
 stateHandler.uiHandler.searchBar.addEventListener("input", async () => {
     stateHandler.searchMode.newSearch();
     await LaunchSearch(stateHandler.uiHandler.searchBar.value);
-});
-
-// store the base64 imageData on the uiHandler
-EventsOn("imageData", (imageData: Map<string, string>) => {
-    stateHandler.uiHandler.images = imageData;
 });
 
 // when Go found results receive, handle and display them

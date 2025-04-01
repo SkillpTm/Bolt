@@ -3,7 +3,7 @@ import "../styles/searchicons.css";
 import "../styles/component.css";
 
 import { LaunchSearch } from "../wailsjs/go/app/App";
-import { EventsOn } from "../wailsjs/runtime/runtime";
+import { EventsOn, WindowHide } from "../wailsjs/runtime/runtime";
 
 import { StateHandler } from "./app/statehandler";
 
@@ -24,6 +24,15 @@ window.onload = () => {
 document.addEventListener("click", () => {
     stateHandler.uiHandler.searchBar.focus();
 });
+
+// if the input bar is not selected anymore the user selected another window, so we hide
+stateHandler.uiHandler.searchBar.addEventListener("blur", () => {
+    setTimeout(() => {
+        if (document.activeElement === stateHandler.uiHandler.searchBar) {
+            WindowHide();
+        }
+      }, 50);
+}),
 
 // move the highlighted section with arrow keys and open a file with enter
 document.addEventListener("keydown", async (event) => {

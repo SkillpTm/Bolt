@@ -19,18 +19,20 @@ import (
 // App holds all the main data and functions relevant to the front- and backend.
 type App struct {
 	CTX           context.Context
+	icon          embed.FS
 	images        embed.FS
 	SearchHandler *modules.SearchHandler
 }
 
 // NewApp is the constructor for App
-func NewApp(images embed.FS) (*App, error) {
+func NewApp(images embed.FS, icon embed.FS) (*App, error) {
 	sh, err := modules.NewSearchHandler()
 	if err != nil {
 		return nil, fmt.Errorf("NewApp: couldn't create SearchHandler:\n--> %w", err)
 	}
 
 	return &App{
+		icon:          icon,
 		images:        images,
 		SearchHandler: sh,
 	}, nil
@@ -42,6 +44,7 @@ It's responsible for launching the main loop, containing all the emit functions.
 */
 func (a *App) Startup(CTX context.Context) {
 	a.CTX = CTX
+	go setupTray(a, a.icon)
 	go a.emitSearchResult()
 	go a.openOnHotKey()
 }

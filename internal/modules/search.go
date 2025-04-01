@@ -74,7 +74,7 @@ func (sh *SearchHandler) Search(input string) {
 	result := search.Start(searchString, fileExtensions, extendedSearch, sh.fileSystem, sh.forceStopChan)
 
 	// we only want to emit the results, if we got any and we have a search String to avoid updating to no results in the middle of typing
-	if len(result) > 0 && len(searchString) > 0 {
+	if len(searchString) > 0 {
 		sh.ResultsChan <- result
 	}
 }

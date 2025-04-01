@@ -247,7 +247,7 @@ class SearchMode {
             } else {
                 this.uiHandler.rightIcon.classList.add("icon-clickable");
     
-                if (this.#resultPage * (this.uiHandler.components.length - 1) < (this.#results.length - 1)) {
+                if (this.#resultPage * this.#maxResultsDispalyed + this.uiHandler.displayedComps < (this.#results.length - 1)) {
                     this.uiHandler.rightIcon.src = this.uiHandler.images.get("right") as string;
                 } else {
                     this.uiHandler.rightIcon.src = this.uiHandler.images.get("not-right") as string;

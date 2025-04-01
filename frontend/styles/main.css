@@ -40,7 +40,9 @@ body {
 }
 
 #right-icon {
-    padding: 6px;
+    width: 32px;
+    height: 32px;
+    margin: 6px;
 }
 
 .icon-clickable {

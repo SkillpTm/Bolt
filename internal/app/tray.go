@@ -1,4 +1,4 @@
-// Package app ...
+// Package app holds the wails app and all emit aswell as export functions that can be used in TS
 package app
 
 import (

@@ -3,6 +3,7 @@ package search
 
 import (
 	"io/fs"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -34,7 +35,9 @@ func newRankedFile(fileInfo fs.FileInfo, file []string, filePath string, pattern
 		newFile.points += exactMatch
 	}
 
-	newFile.points += subStringEarlyMax - (10 * strings.Index(strings.ToLower(file[1]), pattern.name))
+	if index, err := strconv.Atoi(file[3]); err == nil {
+		newFile.points += subStringEarlyMax - (10 * index)
+	}
 
 	modifiedSecondsAgo := min(time.Now().UTC().Unix()-fileInfo.ModTime().UTC().Unix(), int64(fourYearsInSeconds))
 	newFile.points += int(recentlyModifiedMax * (1 - float64(modifiedSecondsAgo)/float64(fourYearsInSeconds)))

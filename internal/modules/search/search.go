@@ -6,6 +6,7 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -137,11 +138,9 @@ func (searchString *SearchString) searchFS(dirs *cache.Dirs, foundFilesChan chan
 					continue
 				}
 
-				if !strings.Contains(strings.ToLower(file.Name), searchString.name) {
-					continue
+				if index := strings.Index(strings.ToLower(file.Name), searchString.name); index >= 0 {
+					foundFilesChan <- &[]string{dirs.Paths[file.PathKey], file.Name, extension, strconv.Itoa(index)}
 				}
-
-				foundFilesChan <- &[]string{dirs.Paths[file.PathKey], file.Name, extension}
 			}
 		}
 	}

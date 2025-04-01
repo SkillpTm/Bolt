@@ -42,18 +42,12 @@ It's responsible for launching the main loop, containing all the emit functions.
 */
 func (a *App) Startup(CTX context.Context) {
 	a.CTX = CTX
-	go func() {
-		err := a.emitImageData()
-		if err != nil {
-			log.Fatalf("Startup: couldn't emit imageData:\n--> %s", err.Error())
-		}
-	}()
 	go a.emitSearchResult()
 	go a.openOnHotKey()
 }
 
-// emitImageData emits a map[name]base64 png data to the frotend to bind in the images
-func (a *App) emitImageData() error {
+// GetImageData emits a map[name]base64 png data to the frotend to bind in the images
+func (a *App) GetImageData() map[string]string {
 	imageData := map[string]string{
 		"cross":            "frontend/src/assets/images/cross.png",
 		"google":           "frontend/src/assets/images/google.png",
@@ -70,14 +64,13 @@ func (a *App) emitImageData() error {
 	for name, path := range imageData {
 		imageBytes, err := a.images.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("couldn't get image %s from embed: %s", path, err.Error())
+			return map[string]string{}
 		}
 
 		imageData[name] = fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(imageBytes))
 	}
 
-	runtime.EventsEmit(a.CTX, "imageData", imageData)
-	return nil
+	return imageData
 }
 
 // emitSearchResult runs continuously and emits the search results with the "searchResult" event to the frontend
@@ -98,6 +91,7 @@ func (a *App) openOnHotKey() {
 
 	for range openHotkey.Keydown() {
 		runtime.WindowShow(a.CTX)
+		runtime.WindowReload(a.CTX)
 	}
 }
 

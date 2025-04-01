@@ -87,6 +87,9 @@ class UIHandler {
         this.#regenerateComponents(max);
     }
 
+    /**
+     * Gets the base64 imageData from Go
+     */
     async getImageData() {
         let temp: Record<string, string> = await GetImageData();
         this.images = new Map(Object.entries(temp));

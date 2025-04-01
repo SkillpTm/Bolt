@@ -38,12 +38,18 @@ stateHandler.uiHandler.searchBar.addEventListener("blur", () => {
 
 // move the highlighted section with arrow keys and open a file with enter
 document.addEventListener("keydown", async (event) => {
-    if (event.key === "ArrowDown") {
+    if (event.ctrlKey && event.key === "ArrowUp") {
         event.preventDefault()
-        stateHandler.searchMode.updateHighlightedComp(1);
+        stateHandler.searchMode.updatePage(-1);
+        event.preventDefault()
+    } else if (event.ctrlKey && event.key === "ArrowDown") {
+        stateHandler.searchMode.updatePage(1);
     } else if (event.key === "ArrowUp") {
         event.preventDefault()
         stateHandler.searchMode.updateHighlightedComp(-1);
+    } else if (event.key === "ArrowDown") {
+        event.preventDefault()
+        stateHandler.searchMode.updateHighlightedComp(1);
     } else if (event.key === "Enter") {
         await stateHandler.openFile(stateHandler.searchMode.getHighlightedFile());
     }

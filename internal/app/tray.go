@@ -21,8 +21,8 @@ func setupTray(a *App, icon embed.FS) {
 
 		systray.SetIcon(appIcon)
 		systray.SetTooltip("Bolt")
-		open := systray.AddMenuItem("Open", "opens bolt search")
-		quit := systray.AddMenuItem("Quit", "quits bolt search")
+		open := systray.AddMenuItem("Open", "opens Bolt search")
+		quit := systray.AddMenuItem("Quit", "quits Bolt search")
 
 		for {
 			select {

@@ -34,7 +34,7 @@ func NewConfig() (*Config, error) {
 		return nil, fmt.Errorf("NewConfig: couldn't access the user's config dir:\n--> %w", err)
 	}
 
-	configMap, err := util.GetJSON(fmt.Sprintf("%s/bolt/config.json", configDir))
+	configMap, err := util.GetJSON(fmt.Sprintf("%s/Bolt/config.json", configDir))
 	if err != nil {
 		return nil, fmt.Errorf("newCoNewConfignfig: couldn't get JSON map:\n--> %w", err)
 	}

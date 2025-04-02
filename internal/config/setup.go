@@ -40,16 +40,16 @@ func setup() error {
 	}
 
 	err = validateFolders([]string{
-		fmt.Sprintf("%s/bolt/", cacheDir),
-		fmt.Sprintf("%s/bolt/", configDir),
+		fmt.Sprintf("%s/Bolt/", cacheDir),
+		fmt.Sprintf("%s/Bolt/", configDir),
 	})
 	if err != nil {
 		return fmt.Errorf("setup: couldn't validate default folders:\n--> %w", err)
 	}
 
 	err = validateFiles([]string{
-		fmt.Sprintf("%s/bolt/search_cache.json", cacheDir),
-		fmt.Sprintf("%s/bolt/config.json", configDir),
+		fmt.Sprintf("%s/Bolt/search_cache.json", cacheDir),
+		fmt.Sprintf("%s/Bolt/config.json", configDir),
 	})
 	if err != nil {
 		return fmt.Errorf("setup: couldn't validate default files:\n--> %w", err)
@@ -134,7 +134,7 @@ func resetConfig() error {
 		},
 	}
 
-	err = util.OverwriteJSON(fmt.Sprintf("%s/bolt/config.json", configDir), defaultConfig)
+	err = util.OverwriteJSON(fmt.Sprintf("%s/Bolt/config.json", configDir), defaultConfig)
 	if err != nil {
 		return fmt.Errorf("resetConfig: couldn't reset default config:\n--> %w", err)
 	}

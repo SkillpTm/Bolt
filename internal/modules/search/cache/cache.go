@@ -4,10 +4,15 @@ package cache
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/skillptm/Bolt/internal/config"
+	"github.com/skillptm/Bolt/internal/util"
 )
 
 // Filesystem stores some metadata for our searches, aswell as the cache of files on the system
@@ -41,6 +46,13 @@ type File struct {
 	PathKey     int
 }
 
+// DirsRules holds name, path and regex rules determening the part of the cache a folder will be in
+type DirsRules struct {
+	Name  map[string]bool
+	Path  map[string]bool
+	Regex []string
+}
+
 // basicFile is a temp struct we use to not have to re-gather file data between different actions
 type basicFile struct {
 	extension string
@@ -51,38 +63,75 @@ type basicFile struct {
 
 // NewFilesystem returns a pointer to a Filesystem struct that has been filled up according to the includedDirs, excludedDirs and config
 func NewFilesystem() (*Filesystem, error) {
-	err := setupFolders()
-	if err != nil {
-		return &Filesystem{}, fmt.Errorf("NewFilesystem: couldn't setup folders:\n--> %w", err)
-	}
 
-	config, err := newConfig()
+	config, err := config.NewConfig()
 	if err != nil {
-		return &Filesystem{}, fmt.Errorf("NewFilesystem: couldn't create config:\n--> %w", err)
+		return nil, fmt.Errorf("NewFilesystem: couldn't create config:\n--> %w", err)
 	}
 
 	fs := Filesystem{
 		DefaultDirs: Dirs{
 			Paths:    make(map[int]string),
-			BaseDirs: config.defaultDirs,
+			BaseDirs: util.MakeBoolMap(config.DefaultDirs),
 			DirMap:   make(map[string]map[int][]File),
 		},
-		ExcludedDirs:           config.excludeDirs,
-		ExcludeFromDefaultDirs: config.excludeFromDefaultDirs,
+		ExcludedDirs: DirsRules{
+			util.MakeBoolMap(config.ExcludeDirs["Name"]),
+			util.MakeBoolMap(config.ExcludeDirs["Path"]),
+			config.ExcludeDirs["Regex"],
+		},
+		ExcludeFromDefaultDirs: DirsRules{
+			util.MakeBoolMap(config.ExcludeFromDefaultDirs["Name"]),
+			util.MakeBoolMap(config.ExcludeFromDefaultDirs["Path"]),
+			config.ExcludeFromDefaultDirs["Regex"],
+		},
 		ExtendedDirs: Dirs{
 			Paths:    make(map[int]string),
-			BaseDirs: config.extendedDirs,
+			BaseDirs: util.MakeBoolMap(config.ExtendedDirs),
 			DirMap:   make(map[string]map[int][]File),
 		},
-		MaxCPUThreads: config.maxCPUThreads,
+		MaxCPUThreads: config.MaxCPUThreads,
 	}
 
 	fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
 	fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
 
-	go fs.autoUpdateCache(config.defaultDirsCacheUpdateTime, config.extendedDirsCacheUpdateTime)
+	go fs.autoUpdateCache(config.DefaultDirsCacheUpdateTime, config.ExtendedDirsCacheUpdateTime)
 
 	return &fs, nil
+}
+
+// Check finds out if the provided Directory breaks any of the name, path or regex rules
+func (dr *DirsRules) Check(dirPath string, add bool, dirs *Dirs) (bool, error) {
+	addPath := func() {
+		if !add {
+			return
+		}
+		dirs.Mu.Lock()
+		dirs.BaseDirs[dirPath] = true
+		dirs.Mu.Unlock()
+	}
+
+	if dr.Path[dirPath] {
+		addPath()
+		return false, nil
+	}
+
+	if dr.Name[path.Base(dirPath)] {
+		addPath()
+		return false, nil
+	}
+
+	for _, pattern := range dr.Regex {
+		if matched, err := regexp.MatchString(pattern, dirPath); matched {
+			addPath()
+			return false, nil
+		} else if err != nil {
+			return false, fmt.Errorf("Check: couldn't match pattern %s:\n--> %w", pattern, err)
+		}
+	}
+
+	return true, nil
 }
 
 // autoUpdateCache automatically updates both the DefaultDirs and ExtendedDirs

@@ -1,5 +1,5 @@
-// Package cache handles everything that has to do with the generation of the cache for the Search function, to the generation of our folder structure and importing of the config.
-package cache
+// Package config ...
+package config
 
 import (
 	"fmt"
@@ -27,16 +27,16 @@ type Rules struct {
 	Regex []string `json:"Regex"`
 }
 
-// setupFolders validates all files/folders we need to exist
-func setupFolders() error {
+// Setup validates all files/folders we need to exist
+func setup() error {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
-		return fmt.Errorf("setupFolders: couldn't access the user's cache dir:\n--> %w", err)
+		return fmt.Errorf("setup: couldn't access the user's cache dir:\n--> %w", err)
 	}
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return fmt.Errorf("setupFolders: couldn't access the user's config dir:\n--> %w", err)
+		return fmt.Errorf("setup: couldn't access the user's config dir:\n--> %w", err)
 	}
 
 	err = validateFolders([]string{
@@ -44,7 +44,7 @@ func setupFolders() error {
 		fmt.Sprintf("%s/bolt/", configDir),
 	})
 	if err != nil {
-		return fmt.Errorf("setupFolders: couldn't validate default folders:\n--> %w", err)
+		return fmt.Errorf("setup: couldn't validate default folders:\n--> %w", err)
 	}
 
 	err = validateFiles([]string{
@@ -52,7 +52,7 @@ func setupFolders() error {
 		fmt.Sprintf("%s/bolt/config.json", configDir),
 	})
 	if err != nil {
-		return fmt.Errorf("setupFolders: couldn't validate default files:\n--> %w", err)
+		return fmt.Errorf("setup: couldn't validate default files:\n--> %w", err)
 	}
 
 	return nil

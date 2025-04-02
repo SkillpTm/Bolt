@@ -94,11 +94,12 @@ Example:
 input: "myFile /e <txt, go>" -> output: "myfile", ["txt", "go"], true
 */
 func matchFlags(input string) (string, []string, bool) {
+	input = strings.ToLower(input)
 	extendedSearch := false
 	extensions := []string{}
 
 	// the pattern detects: /e and /E for the extended search flag
-	pattern := "(/e|/E)"
+	pattern := "/e"
 
 	regex := regexp.MustCompile(pattern)
 
@@ -119,9 +120,7 @@ func matchFlags(input string) (string, []string, bool) {
 				match = strings.ReplaceAll(match, char, "")
 			}
 
-			for _, ext := range strings.Split(match, ",") {
-				extensions = append(extensions, strings.ToLower(ext))
-			}
+			extensions = append(extensions, strings.Split(match, ",")...)
 		}
 	}
 

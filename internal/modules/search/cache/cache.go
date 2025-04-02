@@ -64,41 +64,35 @@ type basicFile struct {
 }
 
 // NewFilesystem returns a pointer to a Filesystem struct that has been filled up according to the includedDirs, excludedDirs and config
-func NewFilesystem() (*Filesystem, error) {
-
-	config, err := config.NewConfig()
-	if err != nil {
-		return nil, fmt.Errorf("NewFilesystem: couldn't create config:\n--> %w", err)
-	}
-
+func NewFilesystem(conf *config.Config) (*Filesystem, error) {
 	fs := Filesystem{
 		DefaultDirs: Dirs{
 			Paths:    make(map[int]string),
-			BaseDirs: util.MakeBoolMap(config.DefaultDirs),
+			BaseDirs: util.MakeBoolMap(conf.DefaultDirs),
 			DirMap:   make(map[string]map[int][]File),
 		},
 		excludedDirs: dirsRules{
-			util.MakeBoolMap(config.ExcludeDirs["Name"]),
-			util.MakeBoolMap(config.ExcludeDirs["Path"]),
-			config.ExcludeDirs["Regex"],
+			util.MakeBoolMap(conf.ExcludeDirs["Name"]),
+			util.MakeBoolMap(conf.ExcludeDirs["Path"]),
+			conf.ExcludeDirs["Regex"],
 		},
 		excludeFromDefaultDirs: dirsRules{
-			util.MakeBoolMap(config.ExcludeFromDefaultDirs["Name"]),
-			util.MakeBoolMap(config.ExcludeFromDefaultDirs["Path"]),
-			config.ExcludeFromDefaultDirs["Regex"],
+			util.MakeBoolMap(conf.ExcludeFromDefaultDirs["Name"]),
+			util.MakeBoolMap(conf.ExcludeFromDefaultDirs["Path"]),
+			conf.ExcludeFromDefaultDirs["Regex"],
 		},
 		ExtendedDirs: Dirs{
 			Paths:    make(map[int]string),
-			BaseDirs: util.MakeBoolMap(config.ExtendedDirs),
+			BaseDirs: util.MakeBoolMap(conf.ExtendedDirs),
 			DirMap:   make(map[string]map[int][]File),
 		},
-		maxCPUThreads: config.MaxCPUThreads,
+		maxCPUThreads: conf.MaxCPUThreads,
 	}
 
 	fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
 	fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
 
-	go fs.autoUpdateCache(config.DefaultDirsCacheUpdateTime, config.ExtendedDirsCacheUpdateTime)
+	go fs.autoUpdateCache(conf.DefaultDirsCacheUpdateTime, conf.ExtendedDirsCacheUpdateTime)
 
 	return &fs, nil
 }

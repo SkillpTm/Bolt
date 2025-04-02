@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/skillptm/Bolt/internal/config"
 	"github.com/skillptm/Bolt/internal/modules/search"
 	"github.com/skillptm/Bolt/internal/modules/search/cache"
 )
@@ -21,14 +22,14 @@ type SearchHandler struct {
 }
 
 // NewSearchHandler is the constructor for SearchHandler, which also sets up the cache and the Filesystem
-func NewSearchHandler() (*SearchHandler, error) {
+func NewSearchHandler(conf *config.Config) (*SearchHandler, error) {
 	sh := SearchHandler{
 		forceStopChan: make(chan bool, 1),
 		ResultsChan:   make(chan []string, 1),
 		searching:     false,
 	}
 
-	fs, err := cache.NewFilesystem()
+	fs, err := cache.NewFilesystem(conf)
 	if err != nil {
 		return nil, fmt.Errorf("NewFilesystem: couldn't setup Filesystem:\n--> %w", err)
 	}
@@ -39,9 +40,9 @@ func NewSearchHandler() (*SearchHandler, error) {
 }
 
 // ForceUpdateCache immediately updates the cache. If extended is set the default/extended caches are updated and reset will reset the whole Filesystem on the SearchHandler
-func (sh *SearchHandler) ForceUpdateCache(extended bool, reset bool) error {
+func (sh *SearchHandler) ForceUpdateCache(conf *config.Config, extended bool, reset bool) error {
 	if reset {
-		fs, err := cache.NewFilesystem()
+		fs, err := cache.NewFilesystem(conf)
 		if err != nil {
 			return fmt.Errorf("ForceUpdateCache: couldn't setup Filesystem:\n--> %w", err)
 		}

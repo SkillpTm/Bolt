@@ -13,11 +13,13 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.design/x/hotkey"
 
+	"github.com/skillptm/Bolt/internal/config"
 	"github.com/skillptm/Bolt/internal/modules"
 )
 
 // App holds all the main data and functions relevant to the front- and backend.
 type App struct {
+	conf          *config.Config
 	CTX           context.Context
 	icon          embed.FS
 	images        embed.FS
@@ -26,12 +28,18 @@ type App struct {
 
 // NewApp is the constructor for App
 func NewApp(images embed.FS, icon embed.FS) (*App, error) {
-	sh, err := modules.NewSearchHandler()
+	conf, err := config.NewConfig()
+	if err != nil {
+		return nil, fmt.Errorf("NewApp: couldn't create config:\n--> %w", err)
+	}
+
+	sh, err := modules.NewSearchHandler(conf)
 	if err != nil {
 		return nil, fmt.Errorf("NewApp: couldn't create SearchHandler:\n--> %w", err)
 	}
 
 	return &App{
+		conf:          conf,
 		icon:          icon,
 		images:        images,
 		SearchHandler: sh,

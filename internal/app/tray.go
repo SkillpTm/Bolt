@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"log"
+	"os"
 
 	"fyne.io/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -30,6 +31,7 @@ func setupTray(a *App, icon embed.FS) {
 			case <-quit.ClickedCh:
 				systray.Quit()
 				runtime.Quit(a.CTX)
+				os.Exit(0)
 			}
 		}
 	}

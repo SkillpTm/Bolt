@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -87,21 +86,18 @@ func NewFilesystem() (*Filesystem, error) {
 }
 
 func (fs *Filesystem) autoUpdateCache(defaultTime int, extendedTime int) {
-	defaultTicker := time.NewTicker(time.Duration(defaultTime) * time.Second)
-	defer defaultTicker.Stop()
-
-	extendedTicker := time.NewTicker(time.Duration(extendedTime) * time.Second)
-	defer extendedTicker.Stop()
+	defaultTimer := time.NewTimer(time.Duration(defaultTime) * time.Second)
+	extendedTimer := time.NewTimer(time.Duration(extendedTime) * time.Second)
 
 	for {
 		select {
-		case <-defaultTicker.C:
+		case <-defaultTimer.C:
 			fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
-		case <-extendedTicker.C:
+			defaultTimer.Reset(time.Duration(defaultTime) * time.Second)
+		case <-extendedTimer.C:
 			fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
+			extendedTimer.Reset(time.Duration(extendedTime) * time.Second)
 		}
-
-		runtime.GC()
 	}
 }
 

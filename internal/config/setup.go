@@ -1,4 +1,4 @@
-// Package config ...
+// Package config validates our local folder structure and to retrieve the config data
 package config
 
 import (
@@ -9,7 +9,7 @@ import (
 	"github.com/skillptm/Bolt/internal/util"
 )
 
-// ConfigJSONData is made to structer and order the data for the config.json
+// ConfigJSONData is made to structure and order the data for the config.json
 type ConfigJSONData struct {
 	MaxCPUThreadPercentage      float64  `json:"MaxCPUThreadPercentage"`
 	DefaultDirsCacheUpdateTime  int      `json:"DefaultDirsCacheUpdateTime"`
@@ -20,7 +20,7 @@ type ConfigJSONData struct {
 	ExcludeDirs                 Rules    `json:"ExcludeDirs"`
 }
 
-// Rules is made to structer and order the data for the config.json
+// Rules is made to structure and order the data for the config.json
 type Rules struct {
 	Name  []string `json:"Name"`
 	Path  []string `json:"Path"`

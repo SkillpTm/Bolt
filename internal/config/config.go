@@ -1,4 +1,4 @@
-// Package config ...
+// Package config validates our local folder structure and to retrieve the config data
 package config
 
 import (

@@ -1,8 +1,7 @@
 export {StateHandler}
 
-import { WindowHide, BrowserOpenURL } from "../../wailsjs/runtime/runtime";
-
 import { OpenFileExplorer } from "../../wailsjs/go/app/App";
+import { BrowserOpenURL, WindowHide } from "../../wailsjs/runtime/runtime";
 
 import { UIHandler } from "../ui/uihandler";
 import { SearchMode } from "../ui/modes/search";
@@ -34,6 +33,9 @@ class StateHandler {
         this.reset()
     }
 
+    /**
+     * resets the ui and state of the frontend
+     */
     reset(): void {
         this.uiHandler.resetUI();
         this.searchMode.newResults([] as Array<string>);

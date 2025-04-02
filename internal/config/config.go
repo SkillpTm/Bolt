@@ -5,26 +5,34 @@ import (
 	"fmt"
 	"math"
 	"runtime"
-	"strings"
 
 	"github.com/skillptm/Bolt/internal/util"
 )
 
-// Config holds the data from the config.json
+// Config is made to structure and order the data for the config.json
 type Config struct {
-	DefaultDirs                 []string
-	DefaultDirsCacheUpdateTime  int
-	ExcludeDirs                 map[string][]string
-	ExcludeFromDefaultDirs      map[string][]string
-	ExtendedDirs                []string
-	ExtendedDirsCacheUpdateTime int
-	MaxCPUThreads               int
-	Paths                       map[string]string
+	MaxCPUThreadPercentage      float64  `json:"MaxCPUThreadPercentage"`
+	DefaultDirsCacheUpdateTime  int      `json:"DefaultDirsCacheUpdateTime"`
+	ExtendedDirsCacheUpdateTime int      `json:"ExtendedDirsCacheUpdateTime"`
+	DefaultDirs                 []string `json:"DefaultDirs"`
+	ExtendedDirs                []string `json:"ExtendedDirs"`
+	ExcludeFromDefaultDirs      Rules    `json:"ExcludeFromDefaultDirs"`
+	ExcludeDirs                 Rules    `json:"ExcludeDirs"`
+
+	MaxCPUThreads int               `json:"-"`
+	Paths         map[string]string `json:"-"`
+}
+
+// Rules is made to structure and order the data for the config.json
+type Rules struct {
+	Name  []string `json:"Name"`
+	Path  []string `json:"Path"`
+	Regex []string `json:"Regex"`
 }
 
 // NewConfig is the constructor for Config, it imports the data from the config.json
 func NewConfig() (*Config, error) {
-	newConfig := Config{}
+	newConfig := Config{Paths: make(map[string]string)}
 	var err error
 
 	newConfig.Paths["search_cache.json"], newConfig.Paths["config.json"], err = setup()
@@ -32,61 +40,12 @@ func NewConfig() (*Config, error) {
 		return nil, fmt.Errorf("NewConfig: couldn't setup folders:\n--> %w", err)
 	}
 
-	configMap, err := util.GetJSON(newConfig.Paths["config.json"])
+	err = util.GetJSON(newConfig.Paths["config.json"], &newConfig)
 	if err != nil {
-		return nil, fmt.Errorf("newCoNewConfignfig: couldn't get JSON map:\n--> %w", err)
+		return nil, fmt.Errorf("NewConfig: couldn't get JSON map:\n--> %w", err)
 	}
 
-	getPaths := func(input []any) []string {
-		output := []string{}
-
-		for _, dir := range input {
-			if !strings.HasSuffix(dir.(string), "/") {
-				dir = fmt.Sprintf("%s/", dir.(string))
-			}
-
-			output = append(output, dir.(string))
-		}
-
-		return output
-	}
-
-	getDirsRules := func(input map[string]any) map[string][]string {
-		rules := map[string][]string{
-			"Name":  {},
-			"Path":  getPaths(input["Path"].([]any)),
-			"Regex": {},
-		}
-
-		for _, name := range input["Name"].([]any) {
-			rules["Name"] = append(rules["Name"], name.(string))
-		}
-
-		for _, regex := range input["Regex"].([]any) {
-			rules["Regex"] = append(rules["Regex"], regex.(string))
-		}
-
-		return rules
-	}
-
-	for key, value := range configMap {
-		switch key {
-		case "MaxCPUThreadPercentage":
-			newConfig.MaxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * configMap["MaxCPUThreadPercentage"].(float64)))
-		case "DefaultDirsCacheUpdateTime":
-			newConfig.DefaultDirsCacheUpdateTime = int(configMap["DefaultDirsCacheUpdateTime"].(float64))
-		case "ExtendedDirsCacheUpdateTime":
-			newConfig.ExtendedDirsCacheUpdateTime = int(configMap["ExtendedDirsCacheUpdateTime"].(float64))
-		case "DefaultDirs":
-			newConfig.DefaultDirs = getPaths(value.([]any))
-		case "ExtendedDirs":
-			newConfig.ExtendedDirs = getPaths(value.([]any))
-		case "ExcludeFromDefaultDirs":
-			newConfig.ExcludeFromDefaultDirs = getDirsRules(value.(map[string]any))
-		case "ExcludeDirs":
-			newConfig.ExcludeDirs = getDirsRules(value.(map[string]any))
-		}
-	}
+	newConfig.MaxCPUThreads = int(math.Ceil(float64(runtime.NumCPU()) * newConfig.MaxCPUThreadPercentage))
 
 	return &newConfig, nil
 }

@@ -71,20 +71,20 @@ func NewFilesystem(conf *config.Config) (*Filesystem, error) {
 			BaseDirs: util.MakeBoolMap(conf.DefaultDirs),
 			DirMap:   make(map[string]map[int][]File),
 		},
-		excludedDirs: dirsRules{
-			util.MakeBoolMap(conf.ExcludeDirs["Name"]),
-			util.MakeBoolMap(conf.ExcludeDirs["Path"]),
-			conf.ExcludeDirs["Regex"],
-		},
-		excludeFromDefaultDirs: dirsRules{
-			util.MakeBoolMap(conf.ExcludeFromDefaultDirs["Name"]),
-			util.MakeBoolMap(conf.ExcludeFromDefaultDirs["Path"]),
-			conf.ExcludeFromDefaultDirs["Regex"],
-		},
 		ExtendedDirs: Dirs{
 			Paths:    make(map[int]string),
 			BaseDirs: util.MakeBoolMap(conf.ExtendedDirs),
 			DirMap:   make(map[string]map[int][]File),
+		},
+		excludedDirs: dirsRules{
+			util.MakeBoolMap(conf.ExcludeDirs.Name),
+			util.MakeBoolMap(conf.ExcludeDirs.Path),
+			conf.ExcludeDirs.Regex,
+		},
+		excludeFromDefaultDirs: dirsRules{
+			util.MakeBoolMap(conf.ExcludeFromDefaultDirs.Name),
+			util.MakeBoolMap(conf.ExcludeFromDefaultDirs.Path),
+			conf.ExcludeFromDefaultDirs.Regex,
 		},
 		maxCPUThreads: conf.MaxCPUThreads,
 	}

@@ -9,24 +9,6 @@ import (
 	"github.com/skillptm/Bolt/internal/util"
 )
 
-// ConfigJSONData is made to structure and order the data for the config.json
-type ConfigJSONData struct {
-	MaxCPUThreadPercentage      float64  `json:"MaxCPUThreadPercentage"`
-	DefaultDirsCacheUpdateTime  int      `json:"DefaultDirsCacheUpdateTime"`
-	ExtendedDirsCacheUpdateTime int      `json:"ExtendedDirsCacheUpdateTime"`
-	DefaultDirs                 []string `json:"DefaultDirs"`
-	ExtendedDirs                []string `json:"ExtendedDirs"`
-	ExcludeFromDefaultDirs      Rules    `json:"ExcludeFromDefaultDirs"`
-	ExcludeDirs                 Rules    `json:"ExcludeDirs"`
-}
-
-// Rules is made to structure and order the data for the config.json
-type Rules struct {
-	Name  []string `json:"Name"`
-	Path  []string `json:"Path"`
-	Regex []string `json:"Regex"`
-}
-
 // Setup validates all files/folders we need to exist and returns their paths
 func setup() (string, string, error) {
 	cacheDir, err := os.UserCacheDir()
@@ -106,7 +88,7 @@ func resetConfig() error {
 		return fmt.Errorf("resetConfig: couldn't access the user's config dir:\n--> %w", err)
 	}
 
-	defaultConfig := ConfigJSONData{
+	defaultConfig := Config{
 		MaxCPUThreadPercentage:      0.25, // percentage of threads that may be used, always rounding the threads up
 		DefaultDirsCacheUpdateTime:  30,   // in seconds
 		ExtendedDirsCacheUpdateTime: 600,  // in seconds

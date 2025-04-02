@@ -8,12 +8,10 @@ import (
 )
 
 // GetJSON will get the data from a JSON file and put it on a map
-func GetJSON(filePath string) (map[string]any, error) {
-	jsonData := map[string]any{}
-
+func GetJSON(filePath string, dataCarrier any) error {
 	jsonFile, err := os.Open(filePath)
 	if err != nil {
-		return jsonData, fmt.Errorf("GetJSON: couldn't open JSON file %s:\n--> %w", filePath, err)
+		return fmt.Errorf("GetJSON: couldn't open JSON file %s:\n--> %w", filePath, err)
 	}
 
 	var returnErr error = nil
@@ -24,12 +22,12 @@ func GetJSON(filePath string) (map[string]any, error) {
 		}
 	}()
 
-	err = json.NewDecoder(jsonFile).Decode(&jsonData)
+	err = json.NewDecoder(jsonFile).Decode(dataCarrier)
 	if err != nil {
-		return jsonData, fmt.Errorf("GetJSON: couldn't decode JSON file %s:\n--> %w", filePath, err)
+		return fmt.Errorf("GetJSON: couldn't decode JSON file %s:\n--> %w", filePath, err)
 	}
 
-	return jsonData, returnErr
+	return returnErr
 }
 
 // OverwriteJSON will take a map or struct with JSON data and the file path and overwrite the data in the existing file

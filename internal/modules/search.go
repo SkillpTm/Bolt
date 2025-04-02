@@ -126,13 +126,13 @@ func matchFlags(input string) (string, []string, bool) {
 
 	input = regex.ReplaceAllString(input, "")
 
+	// remove any lone flag characters from the search
+	input = strings.Trim(input, " /<>")
+
 	if index := strings.LastIndex(input, "."); index >= 0 && !slices.Contains(extensions, "folder") {
 		extensions = append(extensions, input[index:])
 		input = input[:index]
 	}
-
-	// remove any lone flag characters from the search
-	input = strings.Trim(input, " /<>")
 
 	return input, extensions, extendedSearch
 }

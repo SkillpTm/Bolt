@@ -116,7 +116,7 @@ func resetConfig() error {
 		},
 	}
 
-	err = util.OverwriteJSON(fmt.Sprintf("%s/Bolt/config.json", configDir), defaultConfig)
+	err = util.OverwriteJSON(fmt.Sprintf("%s/Bolt/config.json", configDir), true, defaultConfig)
 	if err != nil {
 		return fmt.Errorf("resetConfig: couldn't reset default config:\n--> %w", err)
 	}

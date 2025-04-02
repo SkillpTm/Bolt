@@ -35,7 +35,7 @@ func NewConfig() (*Config, error) {
 	newConfig := Config{Paths: make(map[string]string)}
 	var err error
 
-	newConfig.Paths["search_cache.json"], newConfig.Paths["config.json"], err = setup()
+	newConfig.Paths["default_cache.json"], newConfig.Paths["extended_cache.json"], newConfig.Paths["config.json"], err = setup()
 	if err != nil {
 		return nil, fmt.Errorf("NewConfig: couldn't setup folders:\n--> %w", err)
 	}

@@ -10,15 +10,15 @@ import (
 )
 
 // Setup validates all files/folders we need to exist and returns their paths
-func setup() (string, string, error) {
+func setup() (string, string, string, error) {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
-		return "", "", fmt.Errorf("setup: couldn't access the user's cache dir:\n--> %w", err)
+		return "", "", "", fmt.Errorf("setup: couldn't access the user's cache dir:\n--> %w", err)
 	}
 
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return "", "", fmt.Errorf("setup: couldn't access the user's config dir:\n--> %w", err)
+		return "", "", "", fmt.Errorf("setup: couldn't access the user's config dir:\n--> %w", err)
 	}
 
 	err = validateFolders([]string{
@@ -26,18 +26,19 @@ func setup() (string, string, error) {
 		fmt.Sprintf("%s/Bolt/", configDir),
 	})
 	if err != nil {
-		return "", "", fmt.Errorf("setup: couldn't validate default folders:\n--> %w", err)
+		return "", "", "", fmt.Errorf("setup: couldn't validate default folders:\n--> %w", err)
 	}
 
 	err = validateFiles([]string{
-		fmt.Sprintf("%s/Bolt/search_cache.json", cacheDir),
+		fmt.Sprintf("%s/Bolt/default_cache.json", cacheDir),
+		fmt.Sprintf("%s/Bolt/extended_cache.json", cacheDir),
 		fmt.Sprintf("%s/Bolt/config.json", configDir),
 	})
 	if err != nil {
-		return "", "", fmt.Errorf("setup: couldn't validate default files:\n--> %w", err)
+		return "", "", "", fmt.Errorf("setup: couldn't validate default files:\n--> %w", err)
 	}
 
-	return fmt.Sprintf("%s/Bolt/search_cache.json", cacheDir), fmt.Sprintf("%s/Bolt/config.json", configDir), nil
+	return fmt.Sprintf("%s/Bolt/default_cache.json", cacheDir), fmt.Sprintf("%s/Bolt/extended_cache.json", cacheDir), fmt.Sprintf("%s/Bolt/config.json", configDir), nil
 }
 
 // validateFolders checks, if our folders in the user's config/cache dirs exists

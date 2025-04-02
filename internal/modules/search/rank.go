@@ -28,7 +28,7 @@ type rankedFile struct {
 }
 
 // newRankedFile constructor for rankedFile
-func newRankedFile(fileInfo fs.FileInfo, file []string, filePath string, pattern *SearchString, defaultDirs map[string]bool) *rankedFile {
+func newRankedFile(fileInfo fs.FileInfo, file []string, filePath string, pattern *searchString, defaultDirs map[string]bool) *rankedFile {
 	newFile := rankedFile{filePath, 0}
 
 	if file[1] == pattern.name {

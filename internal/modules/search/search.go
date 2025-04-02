@@ -13,15 +13,15 @@ import (
 	"github.com/skillptm/Bolt/internal/modules/search/cache"
 )
 
-// SearchString holds all the data releated to the searchString input, so we only have to calculate them once
-type SearchString struct {
+// searchString holds all the data releated to the searchString input, so we only have to calculate them once
+type searchString struct {
 	encoded    [8]byte
 	extensions []string
 	name       string
 }
 
-// NewSearchString returns a pointer to a SearchString struct based on the string input
-func NewSearchString(searchString string, fileExtensions []string) *SearchString {
+// NewSearchString returns a pointer to a searchString struct based on the string input
+func newSearchString(searchInput string, fileExtensions []string) *searchString {
 	properExtensions := []string{}
 
 	// make sure all extensions begin with a period, unless it's "Folder"
@@ -42,21 +42,21 @@ func NewSearchString(searchString string, fileExtensions []string) *SearchString
 		properExtensions = append(properExtensions, element)
 	}
 
-	return &SearchString{
-		encoded:    cache.Encode(searchString),
+	return &searchString{
+		encoded:    cache.Encode(searchInput),
 		extensions: properExtensions,
-		name:       strings.ToLower(searchString),
+		name:       strings.ToLower(searchInput),
 	}
 }
 
 // Start wraps around searchFS and then also sorts and ranks the results. The forceStopChan can search it to end it's search early. This will make it yield no results.
-func Start(searchString string, fileExtensions []string, extendedSearch bool, fs *cache.Filesystem, forceStopChan chan bool) []string {
-	if len(searchString) < 1 {
+func Start(searchInput string, fileExtensions []string, extendedSearch bool, fs *cache.Filesystem, forceStopChan chan bool) []string {
+	if len(searchInput) < 1 {
 		return []string{}
 	}
 
 	output := []string{}
-	pattern := NewSearchString(searchString, fileExtensions)
+	pattern := newSearchString(searchInput, fileExtensions)
 	foundFilesChan := make(chan *[]string, 10000000)
 	rankedFiles := []rankedFile{}
 	wg := sync.WaitGroup{}
@@ -109,12 +109,12 @@ func Start(searchString string, fileExtensions []string, extendedSearch bool, fs
 }
 
 // searchFS searches one of the provided FileSystem maps, while skiping files for wrong extensions and ecoded values
-func (searchString *SearchString) searchFS(dirs *cache.Dirs, foundFilesChan chan<- *[]string, forceStopChan chan bool, wg *sync.WaitGroup) {
+func (sStr *searchString) searchFS(dirs *cache.Dirs, foundFilesChan chan<- *[]string, forceStopChan chan bool, wg *sync.WaitGroup) {
 	defer wg.Done()
 	extensionsToCheck := []string{}
 
-	if len(searchString.extensions) > 0 {
-		for _, searchExt := range searchString.extensions {
+	if len(sStr.extensions) > 0 {
+		for _, searchExt := range sStr.extensions {
 			if _, ok := dirs.DirMap[searchExt]; ok {
 				extensionsToCheck = append(extensionsToCheck, searchExt)
 			}
@@ -125,7 +125,7 @@ func (searchString *SearchString) searchFS(dirs *cache.Dirs, foundFilesChan chan
 
 	for _, extension := range extensionsToCheck {
 		for length, files := range dirs.DirMap[extension] {
-			if length < len(searchString.name) {
+			if length < len(sStr.name) {
 				continue
 			}
 
@@ -134,11 +134,11 @@ func (searchString *SearchString) searchFS(dirs *cache.Dirs, foundFilesChan chan
 					return
 				}
 
-				if !cache.CompareEncoding(searchString.encoded, file.EncodedName) {
+				if !cache.CompareEncoding(sStr.encoded, file.EncodedName) {
 					continue
 				}
 
-				if index := strings.Index(strings.ToLower(file.Name), searchString.name); index >= 0 {
+				if index := strings.Index(strings.ToLower(file.Name), sStr.name); index >= 0 {
 					foundFilesChan <- &[]string{dirs.Paths[file.PathKey], file.Name, extension, strconv.Itoa(index)}
 				}
 			}

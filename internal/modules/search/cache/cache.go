@@ -17,11 +17,12 @@ import (
 
 // Filesystem stores some metadata for our searches, aswell as the cache of files on the system
 type Filesystem struct {
-	DefaultDirs            Dirs
-	ExcludedDirs           DirsRules
-	ExcludeFromDefaultDirs DirsRules
-	ExtendedDirs           Dirs
-	MaxCPUThreads          int
+	DefaultDirs  Dirs
+	ExtendedDirs Dirs
+
+	excludedDirs           dirsRules
+	excludeFromDefaultDirs dirsRules
+	maxCPUThreads          int
 }
 
 /*
@@ -33,9 +34,10 @@ paths: map[unique ID]Absolute Path
 dirMap: map[File Extension]map[File Length][]File{encodedName, Name, pathKey}
 */
 type Dirs struct {
+	mu sync.Mutex
+
 	DirMap   map[string]map[int][]File
 	BaseDirs map[string]bool
-	Mu       sync.Mutex
 	Paths    map[int]string
 }
 
@@ -46,11 +48,11 @@ type File struct {
 	PathKey     int
 }
 
-// DirsRules holds name, path and regex rules determening the part of the cache a folder will be in
-type DirsRules struct {
-	Name  map[string]bool
-	Path  map[string]bool
-	Regex []string
+// dirsRules holds name, path and regex rules determening the part of the cache a folder will be in
+type dirsRules struct {
+	name  map[string]bool
+	path  map[string]bool
+	regex []string
 }
 
 // basicFile is a temp struct we use to not have to re-gather file data between different actions
@@ -75,12 +77,12 @@ func NewFilesystem() (*Filesystem, error) {
 			BaseDirs: util.MakeBoolMap(config.DefaultDirs),
 			DirMap:   make(map[string]map[int][]File),
 		},
-		ExcludedDirs: DirsRules{
+		excludedDirs: dirsRules{
 			util.MakeBoolMap(config.ExcludeDirs["Name"]),
 			util.MakeBoolMap(config.ExcludeDirs["Path"]),
 			config.ExcludeDirs["Regex"],
 		},
-		ExcludeFromDefaultDirs: DirsRules{
+		excludeFromDefaultDirs: dirsRules{
 			util.MakeBoolMap(config.ExcludeFromDefaultDirs["Name"]),
 			util.MakeBoolMap(config.ExcludeFromDefaultDirs["Path"]),
 			config.ExcludeFromDefaultDirs["Regex"],
@@ -90,7 +92,7 @@ func NewFilesystem() (*Filesystem, error) {
 			BaseDirs: util.MakeBoolMap(config.ExtendedDirs),
 			DirMap:   make(map[string]map[int][]File),
 		},
-		MaxCPUThreads: config.MaxCPUThreads,
+		maxCPUThreads: config.MaxCPUThreads,
 	}
 
 	fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
@@ -101,33 +103,59 @@ func NewFilesystem() (*Filesystem, error) {
 	return &fs, nil
 }
 
-// Check finds out if the provided Directory breaks any of the name, path or regex rules
-func (dr *DirsRules) Check(dirPath string, add bool, dirs *Dirs) (bool, error) {
+// Update launches the traversing of the dirs and later starts the adding of the results onto the fs
+func (fs *Filesystem) Update(dirs *Dirs, otherDirs *Dirs) {
+
+	// 10000000 is the channel size, because we just need a ridiculously large channel to store all the paths until we traversed them
+	pathQueue := make(chan string, 10000000)
+	results := make(chan *basicFile, 10000000)
+	wg := sync.WaitGroup{}
+
+	for dir := range dirs.BaseDirs {
+		wg.Add(1)
+		pathQueue <- dir
+	}
+
+	for range fs.maxCPUThreads {
+		go fs.traverse(pathQueue, results, otherDirs, &wg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+		close(pathQueue)
+	}()
+
+	dirs.add(results)
+}
+
+// check finds out if the provided Directory breaks any of the name, path or regex rules
+func (dr *dirsRules) check(dirPath string, add bool, dirs *Dirs) (bool, error) {
 	addPath := func() {
 		if !add {
 			return
 		}
-		dirs.Mu.Lock()
+		dirs.mu.Lock()
 		dirs.BaseDirs[dirPath] = true
-		dirs.Mu.Unlock()
+		dirs.mu.Unlock()
 	}
 
-	if dr.Path[dirPath] {
+	if dr.path[dirPath] {
 		addPath()
 		return false, nil
 	}
 
-	if dr.Name[path.Base(dirPath)] {
+	if dr.name[path.Base(dirPath)] {
 		addPath()
 		return false, nil
 	}
 
-	for _, pattern := range dr.Regex {
+	for _, pattern := range dr.regex {
 		if matched, err := regexp.MatchString(pattern, dirPath); matched {
 			addPath()
 			return false, nil
 		} else if err != nil {
-			return false, fmt.Errorf("Check: couldn't match pattern %s:\n--> %w", pattern, err)
+			return false, fmt.Errorf("check: couldn't match pattern %s:\n--> %w", pattern, err)
 		}
 	}
 
@@ -151,32 +179,6 @@ func (fs *Filesystem) autoUpdateCache(defaultTime int, extendedTime int) {
 	}
 }
 
-// Update launches the traversing of the dirs and later starts the adding of the results onto the fs
-func (fs *Filesystem) Update(dirs *Dirs, otherDirs *Dirs) {
-
-	// 10000000 is the channel size, because we just need a ridiculously large channel to store all the paths until we traversed them
-	pathQueue := make(chan string, 10000000)
-	results := make(chan *basicFile, 10000000)
-	wg := sync.WaitGroup{}
-
-	for dir := range dirs.BaseDirs {
-		wg.Add(1)
-		pathQueue <- dir
-	}
-
-	for range fs.MaxCPUThreads {
-		go fs.traverse(pathQueue, results, otherDirs, &wg)
-	}
-
-	go func() {
-		wg.Wait()
-		close(results)
-		close(pathQueue)
-	}()
-
-	dirs.add(results)
-}
-
 // traverse walks through and expands the pathQueue to store all files and folders it encounters in resultsChan unless it breaks with excludedDirs
 func (fs *Filesystem) traverse(pathQueue chan string, results chan<- *basicFile, otherDirs *Dirs, wg *sync.WaitGroup) {
 	for currentDir := range pathQueue {
@@ -195,11 +197,11 @@ func (fs *Filesystem) traverse(pathQueue chan string, results chan<- *basicFile,
 
 				entryPath := fmt.Sprintf("%s%s", filepath.Join(currentDir, entry.Name()), string(filepath.Separator))
 
-				if checked, err := fs.ExcludedDirs.Check(entryPath, false, &fs.ExtendedDirs); !checked || err != nil {
+				if checked, err := fs.excludedDirs.check(entryPath, false, &fs.ExtendedDirs); !checked || err != nil {
 					continue
 				}
 
-				if checked, err := fs.ExcludeFromDefaultDirs.Check(entryPath, true, &fs.ExtendedDirs); !checked || err != nil {
+				if checked, err := fs.excludeFromDefaultDirs.check(entryPath, true, &fs.ExtendedDirs); !checked || err != nil {
 					continue
 				}
 

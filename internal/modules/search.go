@@ -122,7 +122,14 @@ func matchFlags(input string) (string, []string, bool) {
 		}
 	}
 
-	input = strings.TrimSpace(regex.ReplaceAllString(input, ""))
+	input = regex.ReplaceAllString(input, "")
+
+	// remove any lone flag characters from the search
+	for _, char := range [3]string{"/", "<", ">"} {
+		input = strings.ReplaceAll(input, char, "")
+	}
+
+	input = strings.TrimSpace(input)
 
 	return input, extensions, extendedSearch
 }

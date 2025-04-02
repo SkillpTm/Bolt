@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/skillptm/Bolt/internal/config"
@@ -114,22 +115,25 @@ func matchFlags(input string) (string, []string, bool) {
 
 	if matches := regex.FindAllString(input, -1); len(matches) > 0 {
 		for _, match := range matches {
-			for _, char := range [3]string{"<", ">", " "} {
+			for _, char := range []string{"<", ">", " "} {
 				match = strings.ReplaceAll(match, char, "")
 			}
 
-			extensions = append(extensions, strings.Split(match, ",")...)
+			for _, ext := range strings.Split(match, ",") {
+				extensions = append(extensions, strings.ToLower(ext))
+			}
 		}
 	}
 
 	input = regex.ReplaceAllString(input, "")
 
-	// remove any lone flag characters from the search
-	for _, char := range [3]string{"/", "<", ">"} {
-		input = strings.ReplaceAll(input, char, "")
+	if index := strings.LastIndex(input, "."); index >= 0 && !slices.Contains(extensions, "folder") {
+		extensions = append(extensions, input[index:])
+		input = input[:index]
 	}
 
-	input = strings.TrimSpace(input)
+	// remove any lone flag characters from the search
+	input = strings.Trim(input, " /<>")
 
 	return input, extensions, extendedSearch
 }

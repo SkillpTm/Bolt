@@ -203,7 +203,7 @@ func (fs *Filesystem) traverse(pathQueue chan string, results chan<- *basicFile,
 					continue
 				}
 
-				results <- &basicFile{"Folder", true, entry.Name(), entryPath}
+				results <- &basicFile{"folder", true, entry.Name(), entryPath}
 				wg.Add(1)
 				pathQueue <- entryPath
 			} else {
@@ -224,7 +224,7 @@ func (dirs *Dirs) add(results <-chan *basicFile) {
 	tempPaths := make(map[string]int)
 
 	for item := range results {
-		itemExtension := (*item).extension
+		itemExtension := strings.ToLower((*item).extension)
 		itemName := (*item).name
 		itemPath := (*item).path
 

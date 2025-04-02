@@ -24,18 +24,13 @@ type searchString struct {
 func newSearchString(searchInput string, fileExtensions []string) *searchString {
 	properExtensions := []string{}
 
-	// make sure all extensions begin with a period, unless it's "Folder"
+	// make sure all extensions begin with a period, unless it's "folder"
 	for _, element := range fileExtensions {
 		if element == "" {
 			continue
 		}
 
-		// ensure "Folder" has the right case
-		if element == "folder" {
-			element = "Folder"
-		}
-
-		if !strings.HasPrefix(element, ".") && element != "Folder" {
+		if !strings.HasPrefix(element, ".") && element != "folder" {
 			element = "." + element
 		}
 
@@ -80,7 +75,7 @@ func Start(searchInput string, fileExtensions []string, extendedSearch bool, fs 
 		}
 		fullPath := ""
 
-		if (*foundFile)[2] != "Folder" {
+		if (*foundFile)[2] != "folder" {
 			fullPath = fmt.Sprintf("%s%s%s", (*foundFile)[0], (*foundFile)[1], (*foundFile)[2])
 		} else {
 			fullPath = (*foundFile)[0]

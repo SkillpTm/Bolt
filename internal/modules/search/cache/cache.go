@@ -85,6 +85,7 @@ func NewFilesystem() (*Filesystem, error) {
 	return &fs, nil
 }
 
+// autoUpdateCache automatically updates both the DefaultDirs and ExtendedDirs
 func (fs *Filesystem) autoUpdateCache(defaultTime int, extendedTime int) {
 	defaultTimer := time.NewTimer(time.Duration(defaultTime) * time.Second)
 	extendedTimer := time.NewTimer(time.Duration(extendedTime) * time.Second)

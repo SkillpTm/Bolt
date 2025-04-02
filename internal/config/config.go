@@ -4,7 +4,6 @@ package config
 import (
 	"fmt"
 	"math"
-	"os"
 	"runtime"
 	"strings"
 
@@ -13,28 +12,27 @@ import (
 
 // Config holds the data from the config.json
 type Config struct {
-	MaxCPUThreads               int
-	DefaultDirsCacheUpdateTime  int
-	ExtendedDirsCacheUpdateTime int
 	DefaultDirs                 []string
-	ExtendedDirs                []string
-	ExcludeFromDefaultDirs      map[string][]string
+	DefaultDirsCacheUpdateTime  int
 	ExcludeDirs                 map[string][]string
+	ExcludeFromDefaultDirs      map[string][]string
+	ExtendedDirs                []string
+	ExtendedDirsCacheUpdateTime int
+	MaxCPUThreads               int
+	Paths                       map[string]string
 }
 
 // NewConfig is the constructor for Config, it imports the data from the config.json
 func NewConfig() (*Config, error) {
-	err := setup()
+	newConfig := Config{}
+	var err error
+
+	newConfig.Paths["search_cache.json"], newConfig.Paths["config.json"], err = setup()
 	if err != nil {
 		return nil, fmt.Errorf("NewConfig: couldn't setup folders:\n--> %w", err)
 	}
 
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return nil, fmt.Errorf("NewConfig: couldn't access the user's config dir:\n--> %w", err)
-	}
-
-	configMap, err := util.GetJSON(fmt.Sprintf("%s/Bolt/config.json", configDir))
+	configMap, err := util.GetJSON(newConfig.Paths["config.json"])
 	if err != nil {
 		return nil, fmt.Errorf("newCoNewConfignfig: couldn't get JSON map:\n--> %w", err)
 	}
@@ -70,8 +68,6 @@ func NewConfig() (*Config, error) {
 
 		return rules
 	}
-
-	newConfig := Config{}
 
 	for key, value := range configMap {
 		switch key {

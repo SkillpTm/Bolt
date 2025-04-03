@@ -95,8 +95,12 @@ func NewFilesystem(conf *config.Config) (*Filesystem, error) {
 		maxCPUThreads: conf.MaxCPUThreads,
 	}
 
+	start := time.Now()
+
 	fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
 	fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
+
+	fmt.Println(time.Since(start))
 
 	go fs.autoUpdateCache(conf.DefaultDirsCacheUpdateTime, conf.ExtendedDirsCacheUpdateTime)
 
@@ -205,9 +209,12 @@ func (fs *Filesystem) traverse(pathQueue chan string, results chan<- basicFile, 
 					continue
 				}
 
+				otherDirs.mu.Lock()
 				if _, ok := otherDirs.BaseDirs[entryPath]; ok {
+					otherDirs.mu.Unlock()
 					continue
 				}
+				otherDirs.mu.Unlock()
 
 				results <- basicFile{"folder", true, entry.Name(), entryPath}
 				wg.Add(1)

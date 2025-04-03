@@ -91,8 +91,9 @@ func resetConfig() error {
 
 	defaultConfig := Config{
 		MaxCPUThreadPercentage:      0.25, // percentage of threads that may be used, always rounding the threads up
-		DefaultDirsCacheUpdateTime:  30,   // in seconds
-		ExtendedDirsCacheUpdateTime: 600,  // in seconds
+		ShortCutEnd:                 "space",
+		DefaultDirsCacheUpdateTime:  30,  // in seconds
+		ExtendedDirsCacheUpdateTime: 600, // in seconds
 		DefaultDirs: []string{
 			fmt.Sprintf("%s/", homedir),
 		},

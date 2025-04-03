@@ -21,6 +21,7 @@ import (
 type App struct {
 	conf          *config.Config
 	CTX           context.Context
+	hotkey        hotkey.Key
 	icon          embed.FS
 	images        embed.FS
 	SearchHandler *modules.SearchHandler
@@ -38,9 +39,23 @@ func NewApp(images embed.FS, icon embed.FS) (*App, error) {
 		return nil, fmt.Errorf("NewApp: couldn't create SearchHandler:\n--> %w", err)
 	}
 
+	keyMap := map[string]hotkey.Key{
+		"a": hotkey.KeyA, "b": hotkey.KeyB, "c": hotkey.KeyC, "d": hotkey.KeyD, "e": hotkey.KeyE,
+		"f": hotkey.KeyF, "g": hotkey.KeyG, "h": hotkey.KeyH, "i": hotkey.KeyI, "j": hotkey.KeyJ,
+		"k": hotkey.KeyK, "l": hotkey.KeyL, "m": hotkey.KeyM, "n": hotkey.KeyN, "o": hotkey.KeyO,
+		"p": hotkey.KeyP, "q": hotkey.KeyQ, "r": hotkey.KeyR, "s": hotkey.KeyS, "t": hotkey.KeyT,
+		"u": hotkey.KeyU, "v": hotkey.KeyV, "w": hotkey.KeyW, "x": hotkey.KeyX, "y": hotkey.KeyY,
+		"z": hotkey.KeyZ, " ": hotkey.KeySpace, "space": hotkey.KeySpace,
+	}
+
+	if _, ok := keyMap[strings.ToLower(conf.ShortCutEnd)]; !ok {
+		return nil, fmt.Errorf("NewApp: invalid hotkey input")
+	}
+
 	return &App{
 		conf:          conf,
 		icon:          icon,
+		hotkey:        keyMap[strings.ToLower(conf.ShortCutEnd)],
 		images:        images,
 		SearchHandler: sh,
 	}, nil
@@ -93,7 +108,7 @@ func (a *App) emitSearchResult() {
 
 // openOnHotKey will unhide and reload the app when ctrl+shift+s is pressed
 func (a *App) openOnHotKey() {
-	openHotkey := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
+	openHotkey := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, a.hotkey)
 
 	err := openHotkey.Register()
 	if err != nil {

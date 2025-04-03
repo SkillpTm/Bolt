@@ -1,6 +1,6 @@
 module github.com/skillptm/Bolt
 
-go 1.24.1
+go 1.24.2
 
 require (
 	fyne.io/systray v1.11.0

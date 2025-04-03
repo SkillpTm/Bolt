@@ -52,7 +52,7 @@ type File struct {
 	PathKey     int     `json:"p"`
 }
 
-// dirsRules holds name, path and regex rules determening the part of the cache a folder will be in
+// dirsRules holds name, path and regex rules determining the part of the cache a folder will be in
 type dirsRules struct {
 	name  map[string]bool
 	path  map[string]bool

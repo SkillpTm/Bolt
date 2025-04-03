@@ -127,7 +127,7 @@ matchFlags cleans the input and returns the flag values in it, it also removes l
 The flags it matches for are:
 
 /e and /E: which tell us if the search is an extended search
-<file extensions>: which tells us the file extensions. The seperator for extensions is a ','
+<file extensions>: which tells us the file extensions. The separator for extensions is a ','
 
 Example:
 

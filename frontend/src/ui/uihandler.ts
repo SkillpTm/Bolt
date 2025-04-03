@@ -1,15 +1,10 @@
 export { UIHandler, type Component };
 
-/* <----------------------------------------------------------------------------------------------------> */
-
+import { GetImageData } from "../../wailsjs/go/app/App";
 import { WindowSetSize } from "../../wailsjs/runtime/runtime";
 
-import { GetImageData } from "../../wailsjs/go/app/App";
-
-/* <----------------------------------------------------------------------------------------------------> */
-
 /**
- * Is in task of doing general work around the components.
+ * Section of the UI below the search bar.
  *
  * A component looks like this in html:
  * <div id="component1" class="hide">
@@ -20,6 +15,18 @@ import { GetImageData } from "../../wailsjs/go/app/App";
  *         <span id="component1-value" class="compValue"></span>
  *     </div>
  * </div>
+ * 
+ * @param self component wrapper
+ * 
+ * @param image component image on the right side
+ * 
+ * @param text wrapper for name, sperator and value
+ * 
+ * @param name component name, left of seperator
+ * 
+ * @param seperator small line between text and name
+ * 
+ * @param value component value, right of seperator
  */
 interface Component {
     self: HTMLDivElement;
@@ -30,10 +37,26 @@ interface Component {
     value: HTMLSpanElement;
 }
 
-/* <----------------------------------------------------------------------------------------------------> */
-
 /**
- * Is in task of doing general work around the components.
+ * Holds the basic properties and functions to manipulate the UI
+ * 
+ * @param TOP_BAR_SIZE pixel size of the top bar
+ * 
+ * @param COMPONENT_SIZE standardised pixel size of a component
+ * 
+ * @param leftIcon html element for the left icon of the top bar
+ * 
+ * @param searchBar html element for the search bar of the top bar
+ * 
+ * @param rightSection html element for the right section of the top bar
+ * 
+ * @param rightIcon html element for the right icon of the top bar
+ * 
+ * @param components array of all components, even the hidden ones
+ * 
+ * @param displayedComps how many components are currently visible
+ * 
+ * @param images map of the base64 image data needed to embed for the html
  */
 class UIHandler {
 
@@ -47,17 +70,41 @@ class UIHandler {
 
     components = [] as Array<Component>;
     displayedComps = 0;
+    images = new Map<string, string>();
 
     /**
      * Creates the components, adds them to the DOM and stores them on the property components.
      *
-     * @param max the maximum components the app should have
+     * @param max the maximum components the app should be able to display, minimum 3
      */
     constructor(max: number) {
-        const body = document.body;
+        this.getImageData();
+
+        if (max < 3) {
+            max = 3;
+        }
+
+        this.#regenerateComponents(max);
+    }
+
+    /**
+     * Gets the base64 imageData from Go
+     */
+    async getImageData() {
+        let temp: Record<string, string> = await GetImageData();
+        this.images = new Map(Object.entries(temp));
+    }
+
+    /**
+     * Makes an HTML element with an id and classes.
+     *
+     * @param max the amount components the app should be able to display
+     */
+    #regenerateComponents(max: number): void {
+        this.components = [] as Array<Component>;
 
         for (let index = 0; index < max; index++) {
-            const newBodyElement = this.#makeElement("div", `component${index+1}`, ["hide"]) as HTMLDivElement;
+            const newWrapper = this.#makeElement("div", `component${index+1}`, ["hide"]) as HTMLDivElement;
             const newSubImage = this.#makeElement("img", `component${index+1}-image`, ["compImg"]) as HTMLImageElement;
             const newTextDiv = this.#makeElement("div", `component${index+1}-text`, ["compText"]) as HTMLDivElement;
             const newNameDiv = this.#makeElement("div", `component${index+1}-name`, ["compName"]) as HTMLDivElement;
@@ -67,20 +114,20 @@ class UIHandler {
             newTextDiv.appendChild(newNameDiv);
             newTextDiv.appendChild(newTextSeperator);
             newTextDiv.appendChild(newTextSpan);
-            newBodyElement.appendChild(newSubImage);
-            newBodyElement.appendChild(newTextDiv);
-            body.appendChild(newBodyElement);
+            newWrapper.appendChild(newSubImage);
+            newWrapper.appendChild(newTextDiv);
+            document.body.appendChild(newWrapper);
 
-            const newComponent: Component = {
-                self: newBodyElement,
-                image: newSubImage,
-                text: newTextDiv,
-                name: newNameDiv,
-                seperator: newTextSeperator,
-                value: newTextSpan,
-            }
-
-            this.components.push(newComponent);
+            this.components.push(
+                {
+                    self: newWrapper,
+                    image: newSubImage,
+                    text: newTextDiv,
+                    name: newNameDiv,
+                    seperator: newTextSeperator,
+                    value: newTextSpan,
+                } as Component
+            );
         }
     }
 
@@ -93,7 +140,7 @@ class UIHandler {
      * 
      * @param classes the classes the element should have
      * 
-     * @returns an HTMLElement with the id and classes attached.
+     * @returns HTMLElement with the id and classes attached.
      */
     #makeElement(tagName: string, id: string, classes: Array<string>): HTMLElement {
         const newElement = document.createElement(tagName);
@@ -109,8 +156,8 @@ class UIHandler {
     /**
      * Resets the UI of the application to the original starting point
      */
-    async resetUI(): Promise<void> {
-        this.leftIcon.src = await GetImageData("magnifying_glass");
+    resetUI(): void {
+        this.leftIcon.src = this.images.get("magnifying_glass") as string;
         this.searchBar.value = "";
         this.rightSection.classList.remove("loading-grid");
         this.rightIcon.src = "";
@@ -119,25 +166,22 @@ class UIHandler {
         this.displayComponents(0);
     }
 
-    // #displayComponents unhides the specified amount of components from top to bottom, if any remain they get hidden. It also resizes the window accordingly
     /**
      * Displays the provided amount of components from top to bottom.
      *
-     * @param amount how many compnents should be displayed, if the number provided is larger than the max components, it gets reset to that
+     * @param amount how many compnents should be displayed, if the number provided is larger than the property components length, it gets set to that
      */
     displayComponents(amount: number): void {
         if (amount > this.components.length) {
             amount = this.components.length;
         }
 
-        this.displayedComps = 0;
+        this.displayedComps = amount;
 
         WindowSetSize(570, this.TOP_BAR_SIZE + (amount * this.COMPONENT_SIZE));
 
         for (let index = 0; index < this.components.length; index++) {
             if (index + 1 <= amount) {
-                this.displayedComps++;
-
                 this.components[index].self.classList.remove("hide");
                 this.components[index].self.classList.add("showComp");
             } else {

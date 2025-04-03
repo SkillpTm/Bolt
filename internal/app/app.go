@@ -1,7 +1,5 @@
-// Package app ...
+// Package app holds the wails app and all emit aswell as export functions that can be used in TS
 package app
-
-// <---------------------------------------------------------------------------------------------------->
 
 import (
 	"context"
@@ -11,30 +9,57 @@ import (
 	"log"
 	"os/exec"
 	"strings"
-	"syscall"
-	"time"
-	"unsafe"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.design/x/hotkey"
-	"golang.org/x/sys/windows"
 
-	"github.com/skillptm/Bolt/internal/searchhandler"
+	"github.com/skillptm/Bolt/internal/config"
+	"github.com/skillptm/Bolt/internal/modules"
 )
-
-// <---------------------------------------------------------------------------------------------------->
 
 // App holds all the main data and functions relevant to the front- and backend.
 type App struct {
+	conf          *config.Config
 	CTX           context.Context
-	hotkey        *hotkey.Hotkey
-	images        map[string]string
-	SearchHandler *searchhandler.SearchHandler
+	icon          embed.FS
+	images        embed.FS
+	SearchHandler *modules.SearchHandler
 }
 
-// NewApp creates a new App struct with all it's values.
-func NewApp(images embed.FS) (*App, error) {
-	imagePaths := map[string]string{
+// NewApp is the constructor for App
+func NewApp(images embed.FS, icon embed.FS) (*App, error) {
+	conf, err := config.NewConfig()
+	if err != nil {
+		return nil, fmt.Errorf("NewApp: couldn't create config:\n--> %w", err)
+	}
+
+	sh, err := modules.NewSearchHandler(conf)
+	if err != nil {
+		return nil, fmt.Errorf("NewApp: couldn't create SearchHandler:\n--> %w", err)
+	}
+
+	return &App{
+		conf:          conf,
+		icon:          icon,
+		images:        images,
+		SearchHandler: sh,
+	}, nil
+}
+
+/*
+Startup is called when the app starts. The context gets saved on the app.
+It's responsible for launching the main loop, containing all the emit functions.
+*/
+func (a *App) Startup(CTX context.Context) {
+	a.CTX = CTX
+	go setupTray(a, a.icon)
+	go a.emitSearchResult()
+	go a.openOnHotKey()
+}
+
+// GetImageData emits a map[name]base64 png data to the frotend to bind in the images
+func (a *App) GetImageData() map[string]string {
+	imageData := map[string]string{
 		"cross":            "frontend/src/assets/images/cross.png",
 		"google":           "frontend/src/assets/images/google.png",
 		"file":             "frontend/src/assets/images/file.png",
@@ -47,45 +72,43 @@ func NewApp(images embed.FS) (*App, error) {
 		"tick":             "frontend/src/assets/images/tick.png",
 	}
 
-	imageMap := make(map[string]string)
-
-	for name, path := range imagePaths {
-		imageData, err := images.ReadFile(path)
+	for name, path := range imageData {
+		imageBytes, err := a.images.ReadFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't get image %s from embed: %s", path, err.Error())
+			return map[string]string{}
 		}
 
-		imageMap[name] = "data:image/png;base64," + base64.StdEncoding.EncodeToString(imageData)
+		imageData[name] = fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(imageBytes))
 	}
 
-	return &App{
-		hotkey:        hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS),
-		images:        imageMap,
-		SearchHandler: searchhandler.New(),
-	}, nil
+	return imageData
 }
 
-/*
-Startup is called when the app starts. The context is saved so we can call the runtime methods.
-
-It also starts the goroutine for emiting the search results to the frontend.
-*/
-func (a *App) Startup(CTX context.Context) {
-	a.CTX = CTX
-	go a.emitSearchResult()
-	go a.openOnHotKey()
-	go a.windowHideOnUnselected()
+// emitSearchResult runs continuously and emits the search results with the "searchResult" event to the frontend
+func (a *App) emitSearchResult() {
+	for results := range a.SearchHandler.ResultsChan {
+		runtime.EventsEmit(a.CTX, "searchResult", results)
+	}
 }
 
-// <---------------------------------------------------------------------------------------------------->
+// openOnHotKey will unhide and reload the app when ctrl+shift+s is pressed
+func (a *App) openOnHotKey() {
+	openHotkey := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
 
-// GetImageData receives a key (being the name of an image) and returns the base64 string data of that image
-func (a *App) GetImageData(name string) string {
-	if data, ok := a.images[name]; ok {
-		return data
+	err := openHotkey.Register()
+	if err != nil {
+		log.Fatalf("openOnHotKey: couldn't register main hotkey:\n--> %s", err.Error())
 	}
 
-	return ""
+	for range openHotkey.Keydown() {
+		a.ShowWindow()
+	}
+}
+
+// HideWindow is a wrapper around runtime.WindowHide that ensures our cache data doesn't unnecessarily stay in memory
+func (a *App) HideWindow() {
+	runtime.WindowHide(a.CTX)
+	a.SearchHandler.ClearImportedCache()
 }
 
 // LaunchSearch starts a search on the SearchHandler of the app
@@ -95,60 +118,33 @@ func (a *App) LaunchSearch(input string) {
 		return
 	}
 
-	a.SearchHandler.StartSearch(input)
+	go a.SearchHandler.Search(input)
 }
 
-// OpenFileExplorer allows you to open the file explorer at any entry's location
+// OpenFileExplorer allows you to open the file manager at any entry's location and select it (if the file manager is dolphin or nautilus)
 func (a *App) OpenFileExplorer(filePath string) {
-	cmd := exec.Command("explorer", "/select,", strings.ReplaceAll(strings.TrimSuffix(filePath, "/"), "/", "\\"))
-	cmd.Run()
-}
+	var cmd *exec.Cmd
 
-// <---------------------------------------------------------------------------------------------------->
-
-// emitSearchResult runs continuously and emits the search results with the "searchResult" event to the frontend
-func (a *App) emitSearchResult() {
-	for result := range a.SearchHandler.ResultsChan {
-		runtime.EventsEmit(a.CTX, "searchResult", result)
-	}
-}
-
-// openOnHotKey will unhide and reload the app when ctrl+shift+s is pressed
-func (a *App) openOnHotKey() {
-	err := a.hotkey.Register()
-	if err != nil {
-		log.Fatalf("main hotkey failed to register: %s", err)
-		return
-	}
-
-	for range a.hotkey.Keydown() {
-		runtime.WindowShow(a.CTX)
-	}
-}
-
-// windowHideOnUnselected will hide the window once you unselected it, by clicking somewhere else
-func (a *App) windowHideOnUnselected() {
-	recheckTicker := time.NewTicker(100 * time.Millisecond)
-
-	for range recheckTicker.C {
-		// The functonality here was copied from: https://gist.github.com/obonyojimmy/d6b263212a011ac7682ac738b7fb4c70
-		mod := windows.NewLazyDLL("user32.dll")
-
-		proc := mod.NewProc("GetForegroundWindow")
-		hwnd, _, _ := proc.Call()
-
-		proc = mod.NewProc("GetWindowTextLengthW")
-		ret, _, _ := proc.Call(hwnd)
-
-		buf := make([]uint16, int(ret)+1)
-		proc = mod.NewProc("GetWindowTextW")
-		proc.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&buf[0])), uintptr(int(ret)+1))
-
-		title := syscall.UTF16ToString(buf)
-
-		if title != "Quick Search" {
-			runtime.WindowHide(a.CTX)
-			runtime.EventsEmit(a.CTX, "hidApp")
+	if _, err := exec.LookPath("dolphin"); err == nil {
+		cmd = exec.Command("dolphin", "--select", filePath)
+	} else if _, err := exec.LookPath("nautilus"); err == nil {
+		cmd = exec.Command("nautilus", "--select", filePath)
+	} else {
+		if index := strings.LastIndex(filePath, "/"); index != -1 {
+			filePath = filePath[:index+1]
 		}
+
+		cmd = exec.Command("xdg-open", filePath)
 	}
+
+	err := cmd.Start()
+	if err != nil {
+		log.Fatalf("OpenFileExplorer: couldn't file manager:\n--> %s", err.Error())
+	}
+}
+
+// ShowWindow is a wrapper around runtime.WindowShow that ensures we load our cache data into memory
+func (a *App) ShowWindow() {
+	a.SearchHandler.ImportCache()
+	runtime.WindowShow(a.CTX)
 }

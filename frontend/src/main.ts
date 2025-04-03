@@ -2,17 +2,12 @@ import "../styles/main.css";
 import "../styles/searchicons.css";
 import "../styles/component.css";
 
-import { LaunchSearch } from "../wailsjs/go/app/App";
+import { HideWindow, LaunchSearch } from "../wailsjs/go/app/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 
 import { StateHandler } from "./app/statehandler";
-import { UIHandler } from "./ui/uihandler";
 
-/* <----------------------------------------------------------------------------------------------------> */
-
-const stateHandler = new StateHandler(new UIHandler(8));
-
-/* <----------------------------------------------------------------------------------------------------> */
+const stateHandler = new StateHandler();
 
 // disable right click
 document.oncontextmenu = () => {
@@ -20,52 +15,52 @@ document.oncontextmenu = () => {
 }
 
 // focus the searchBar on load
-window.onload = async () => {
+window.onload = () => {
     stateHandler.uiHandler.searchBar.focus();
-    stateHandler.uiHandler.searchBar.select();
-    await stateHandler.reset();
+    stateHandler.reset();
 }
 
-// makes sure the searchBar is always clicked
+// makes sure the searchBar is always focused
 document.addEventListener("click", () => {
     stateHandler.uiHandler.searchBar.focus();
 });
 
-// reset the app once it has been hidden
-EventsOn("hidApp", async () => {
-    await stateHandler.reset();
-});
+// if the input bar is not selected anymore the user selected another window, so we hide
+stateHandler.uiHandler.searchBar.addEventListener("blur", () => {
+    setTimeout(() => {
+        if (document.activeElement === stateHandler.uiHandler.searchBar) {
+            HideWindow();
+            stateHandler.reset();
+        }
+      }, 50);
+}),
 
-// move the highlighted section with arrow keys and open afile with enter
+// move the highlighted section with arrow keys and open a file with enter
 document.addEventListener("keydown", async (event) => {
-    if (event.key === "ArrowDown") {
+    if (event.ctrlKey && event.key === "ArrowUp") {
         event.preventDefault()
-        stateHandler.search.updateHighlightedComp(1);
+        stateHandler.searchMode.updatePage(-1);
+        event.preventDefault()
+    } else if (event.ctrlKey && event.key === "ArrowDown") {
+        stateHandler.searchMode.updatePage(1);
     } else if (event.key === "ArrowUp") {
         event.preventDefault()
-        stateHandler.search.updateHighlightedComp(-1);
+        stateHandler.searchMode.updateHighlightedComp(-1);
+    } else if (event.key === "ArrowDown") {
+        event.preventDefault()
+        stateHandler.searchMode.updateHighlightedComp(1);
     } else if (event.key === "Enter") {
-        await stateHandler.openFile(stateHandler.search.getHighlightedFile());
+        await stateHandler.openFile(stateHandler.searchMode.getHighlightedFile());
     }
 });
 
 // send the current input to Go to search the file system
 stateHandler.uiHandler.searchBar.addEventListener("input", async () => {
-    stateHandler.search.newSearch();
+    stateHandler.searchMode.newSearch();
     await LaunchSearch(stateHandler.uiHandler.searchBar.value);
 });
 
 // when Go found results receive, handle and display them
-EventsOn("searchResult", async (results: string[]) => {
-    await stateHandler.search.newResults(results);
-});
-
-// change page forwards with shortcut
-EventsOn("pageForward", async () => {
-    await stateHandler.search.updatePage(1);
-});
-
-// change page backwards with shortcut
-EventsOn("pageBackward", async () => {
-    await stateHandler.search.updatePage(-1);
+EventsOn("searchResult", (results: string[]) => {
+    stateHandler.searchMode.newResults(results);
 });

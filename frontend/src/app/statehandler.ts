@@ -1,52 +1,53 @@
 export {StateHandler}
 
-/* <----------------------------------------------------------------------------------------------------> */
-
-import { WindowHide, BrowserOpenURL } from "../../wailsjs/runtime/runtime";
-
-import { OpenFileExplorer } from "../../wailsjs/go/app/App";
+import { HideWindow, OpenFileExplorer } from "../../wailsjs/go/app/App";
+import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 
 import { UIHandler } from "../ui/uihandler";
-import { Search } from "../ui/modes/search";
-
-/* <----------------------------------------------------------------------------------------------------> */
+import { SearchMode } from "../ui/modes/search";
 
 /**
  * Holds the uiHandler and all the UI modes.
+ * 
+ * @param uiHandler the main uiHandler used to manipulate the UI
+ * 
+ * @param searchMode mode used to change the UI depending on the search state
  */
 class StateHandler {
     uiHandler!: UIHandler;
-    search!: Search;
+    searchMode!: SearchMode;
 
     /**
-     * Sets the uiHandler as a property and adds the properties: Search.
-     *
-     * @param uiHandler the main uiHandler used throught the app
+     * Sets the uiHandler as a property and adds the property: Search.
      */
-    constructor(uiHandler: UIHandler) {
-        this.uiHandler = uiHandler;
-        this.search = new Search(uiHandler);
+    constructor() {
+        this.uiHandler = new UIHandler(8);
+        this.searchMode = new SearchMode(this.uiHandler);
 
         this.uiHandler.components.forEach((comp) => {
             comp.self.addEventListener("click", async () => {
-                await this.openFile(this.search.getHoveredFile(comp));
+                await this.openFile(this.searchMode.getHoveredFile(comp));
             });
         });
+
+        this.reset()
     }
 
-    async reset(): Promise<void> {
-        await this.uiHandler.resetUI();
-        await this.search.newResults([] as Array<string>);
-    }
-
-    // openFile opens the given file and hides the app
     /**
-     * Open the given file with a windows file explorer.
+     * resets the ui and state of the frontend
+     */
+    reset(): void {
+        this.uiHandler.resetUI();
+        this.searchMode.newResults([] as Array<string>);
+    }
+
+    /**
+     * Open the given file with a file manager/the search result in the browser and hide the search window.
      *
-     * @param filePath the path for the file to be opened
+     * @param filePath the path for the file to be opened. If "<web-search>" opens the search result in the browser
      */
     async openFile(filePath: string): Promise<void> {
-        WindowHide();
+        HideWindow();
 
         if (filePath === "<web-search>") {
             BrowserOpenURL(`https://www.google.com/search?q=${this.uiHandler.searchBar.value}`);
@@ -54,6 +55,6 @@ class StateHandler {
             await OpenFileExplorer(filePath);
         }
 
-        await this.reset();
+        this.reset();
     }
 }

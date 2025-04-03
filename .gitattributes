@@ -1,2 +1,1 @@
-*.nsh linguist-detectable=false
-*.nsi linguist-detectable=false
+*.js linguist-detectable=false

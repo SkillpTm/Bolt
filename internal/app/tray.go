@@ -27,7 +27,7 @@ func setupTray(a *App, icon embed.FS) {
 		for {
 			select {
 			case <-open.ClickedCh:
-				runtime.WindowShow(a.CTX)
+				a.ShowWindow()
 			case <-quit.ClickedCh:
 				systray.Quit()
 				runtime.Quit(a.CTX)

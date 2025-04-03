@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"regexp"
 	"runtime"
+	"runtime/debug"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/skillptm/Bolt/internal/config"
 	"github.com/skillptm/Bolt/internal/modules/search"
 	"github.com/skillptm/Bolt/internal/modules/search/cache"
+	"github.com/skillptm/Bolt/internal/util"
 )
 
 // SearchHandler is an interface which will hold the indexed cache and be the start point for searches
@@ -40,6 +43,20 @@ func NewSearchHandler(conf *config.Config) (*SearchHandler, error) {
 	return &sh, nil
 }
 
+// ClearImportedCache clears the cache data from memory
+func (sh *SearchHandler) ClearImportedCache() {
+	sh.fileSystem.DefaultDirs.DirMap = make(map[string]map[int][]cache.File)
+	sh.fileSystem.DefaultDirs.Paths = make(map[int]string)
+	sh.fileSystem.DefaultDirs.Imported = false
+
+	sh.fileSystem.ExtendedDirs.DirMap = make(map[string]map[int][]cache.File)
+	sh.fileSystem.ExtendedDirs.Paths = make(map[int]string)
+	sh.fileSystem.ExtendedDirs.Imported = false
+
+	runtime.GC()
+	debug.FreeOSMemory()
+}
+
 // ForceUpdateCache immediately updates the cache. If extended is set the default/extended caches are updated and reset will reset the whole Filesystem on the SearchHandler
 func (sh *SearchHandler) ForceUpdateCache(conf *config.Config, extended bool, reset bool) error {
 	if reset {
@@ -61,6 +78,18 @@ func (sh *SearchHandler) ForceUpdateCache(conf *config.Config, extended bool, re
 	return nil
 }
 
+// ImportCache imports the cache data from the disk into memory
+func (sh *SearchHandler) ImportCache() {
+	util.GetJSON(sh.fileSystem.DefaultDirs.CachePath, &sh.fileSystem.DefaultDirs)
+	sh.fileSystem.DefaultDirs.Imported = true
+
+	// in a goroutine to speed up start up time
+	go func() {
+		util.GetJSON(sh.fileSystem.ExtendedDirs.CachePath, &sh.fileSystem.ExtendedDirs)
+		sh.fileSystem.ExtendedDirs.Imported = true
+	}()
+}
+
 // Search is the public facing wrapper for the search function, handling breaking old searches and starting new ones
 func (sh *SearchHandler) Search(input string) {
 	if sh.searching {
@@ -72,6 +101,17 @@ func (sh *SearchHandler) Search(input string) {
 	sh.forceStopChan = make(chan bool, 1)
 	searchString, fileExtensions, extendedSearch := matchFlags(input)
 	sh.searching = true
+
+	// Importing the extended dirs is done over a goroutine, which might not have finished here. So we wait for it and break early with the forceStopChan, if needed
+	if extendedSearch && !sh.fileSystem.ExtendedDirs.Imported {
+		for !sh.fileSystem.ExtendedDirs.Imported {
+			time.Sleep(time.Duration(5) * time.Millisecond)
+		}
+
+		if len(sh.forceStopChan) > 0 {
+			return
+		}
+	}
 
 	result := search.Start(searchString, fileExtensions, extendedSearch, sh.fileSystem, sh.forceStopChan)
 

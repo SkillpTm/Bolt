@@ -7,6 +7,8 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -34,18 +36,20 @@ paths: map[unique ID]Absolute Path
 dirMap: map[File Extension]map[File Length][]File{encodedName, Name, pathKey}
 */
 type Dirs struct {
-	mu sync.Mutex
+	mu sync.Mutex `json:"-"`
 
-	DirMap   map[string]map[int][]File
-	BaseDirs map[string]bool
-	Paths    map[int]string
+	BaseDirs  map[string]bool           `json:"-"`
+	CachePath string                    `json:"-"`
+	DirMap    map[string]map[int][]File `json:"d"`
+	Imported  bool                      `json:"-"`
+	Paths     map[int]string            `json:"p"`
 }
 
 // File stores all the data we need for a fast retrival later on
 type File struct {
-	EncodedName [8]byte
-	Name        string
-	PathKey     int
+	EncodedName [8]byte `json:"e"`
+	Name        string  `json:"n"`
+	PathKey     int     `json:"p"`
 }
 
 // dirsRules holds name, path and regex rules determening the part of the cache a folder will be in
@@ -67,14 +71,16 @@ type basicFile struct {
 func NewFilesystem(conf *config.Config) (*Filesystem, error) {
 	fs := Filesystem{
 		DefaultDirs: Dirs{
-			Paths:    make(map[int]string),
-			BaseDirs: util.MakeBoolMap(conf.DefaultDirs),
-			DirMap:   make(map[string]map[int][]File),
+			CachePath: conf.Paths["default_cache.json"],
+			BaseDirs:  util.MakeBoolMap(conf.DefaultDirs),
+			DirMap:    make(map[string]map[int][]File),
+			Paths:     make(map[int]string),
 		},
 		ExtendedDirs: Dirs{
-			Paths:    make(map[int]string),
-			BaseDirs: util.MakeBoolMap(conf.ExtendedDirs),
-			DirMap:   make(map[string]map[int][]File),
+			CachePath: conf.Paths["extended_cache.json"],
+			BaseDirs:  util.MakeBoolMap(conf.ExtendedDirs),
+			DirMap:    make(map[string]map[int][]File),
+			Paths:     make(map[int]string),
 		},
 		excludedDirs: dirsRules{
 			util.MakeBoolMap(conf.ExcludeDirs.Name),
@@ -102,7 +108,7 @@ func (fs *Filesystem) Update(dirs *Dirs, otherDirs *Dirs) {
 
 	// 10000000 is the channel size, because we just need a ridiculously large channel to store all the paths until we traversed them
 	pathQueue := make(chan string, 10000000)
-	results := make(chan *basicFile, 10000000)
+	results := make(chan basicFile, 10000000)
 	wg := sync.WaitGroup{}
 
 	for dir := range dirs.BaseDirs {
@@ -174,7 +180,7 @@ func (fs *Filesystem) autoUpdateCache(defaultTime int, extendedTime int) {
 }
 
 // traverse walks through and expands the pathQueue to store all files and folders it encounters in resultsChan unless it breaks with excludedDirs
-func (fs *Filesystem) traverse(pathQueue chan string, results chan<- *basicFile, otherDirs *Dirs, wg *sync.WaitGroup) {
+func (fs *Filesystem) traverse(pathQueue chan string, results chan<- basicFile, otherDirs *Dirs, wg *sync.WaitGroup) {
 	for currentDir := range pathQueue {
 		currentEntries, err := os.ReadDir(currentDir)
 		// an error here simply means we didn't have the permissions to read a dir, so we ignore it
@@ -203,14 +209,14 @@ func (fs *Filesystem) traverse(pathQueue chan string, results chan<- *basicFile,
 					continue
 				}
 
-				results <- &basicFile{"folder", true, entry.Name(), entryPath}
+				results <- basicFile{"folder", true, entry.Name(), entryPath}
 				wg.Add(1)
 				pathQueue <- entryPath
 			} else {
 				fileExtension := filepath.Ext(filepath.Join(currentDir, entry.Name()))
 				fileName, _ := strings.CutSuffix(entry.Name(), fileExtension)
 
-				results <- &basicFile{fileExtension, false, fileName, currentDir}
+				results <- basicFile{fileExtension, false, fileName, currentDir}
 			}
 		}
 
@@ -219,14 +225,15 @@ func (fs *Filesystem) traverse(pathQueue chan string, results chan<- *basicFile,
 }
 
 // add formats and overwrites the dirMap on fs
-func (dirs *Dirs) add(results <-chan *basicFile) {
+func (dirs *Dirs) add(results <-chan basicFile) {
+
 	newDirMap := make(map[string]map[int][]File)
 	tempPaths := make(map[string]int)
 
 	for item := range results {
-		itemExtension := strings.ToLower((*item).extension)
-		itemName := (*item).name
-		itemPath := (*item).path
+		itemExtension := strings.ToLower(item.extension)
+		itemName := item.name
+		itemPath := item.path
 
 		if _, ok := newDirMap[itemExtension]; !ok {
 			newDirMap[itemExtension] = make(map[int][]File)
@@ -236,7 +243,7 @@ func (dirs *Dirs) add(results <-chan *basicFile) {
 			newDirMap[itemExtension][len(itemName)] = []File{}
 		}
 
-		if _, ok := tempPaths[itemPath]; (*item).isFolder && !ok {
+		if _, ok := tempPaths[itemPath]; item.isFolder && !ok {
 			tempPaths[itemPath] = len(tempPaths)
 		}
 
@@ -248,6 +255,23 @@ func (dirs *Dirs) add(results <-chan *basicFile) {
 		newPaths[value] = key
 	}
 
-	dirs.Paths = newPaths
-	dirs.DirMap = newDirMap
+	go util.OverwriteJSON(
+		dirs.CachePath,
+		false,
+		map[string]any{
+			"d": newDirMap,
+			"p": newPaths,
+		},
+	)
+
+	if len(dirs.DirMap) > 0 && len(dirs.Paths) > 0 {
+		dirs.DirMap = newDirMap
+		dirs.Paths = newPaths
+	}
+
+	// reseting these to nil provides better debug.FreeOSMemory results
+	newDirMap, tempPaths, newPaths = nil, nil, nil
+
+	runtime.GC()
+	debug.FreeOSMemory()
 }

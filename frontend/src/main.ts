@@ -2,8 +2,8 @@ import "../styles/main.css";
 import "../styles/searchicons.css";
 import "../styles/component.css";
 
-import { LaunchSearch } from "../wailsjs/go/app/App";
-import { EventsOn, WindowHide } from "../wailsjs/runtime/runtime";
+import { HideWindow, LaunchSearch } from "../wailsjs/go/app/App";
+import { EventsOn } from "../wailsjs/runtime/runtime";
 
 import { StateHandler } from "./app/statehandler";
 
@@ -29,7 +29,7 @@ document.addEventListener("click", () => {
 stateHandler.uiHandler.searchBar.addEventListener("blur", () => {
     setTimeout(() => {
         if (document.activeElement === stateHandler.uiHandler.searchBar) {
-            WindowHide();
+            HideWindow();
             stateHandler.reset();
         }
       }, 50);

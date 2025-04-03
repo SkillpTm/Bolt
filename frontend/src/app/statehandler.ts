@@ -1,7 +1,7 @@
 export {StateHandler}
 
-import { OpenFileExplorer } from "../../wailsjs/go/app/App";
-import { BrowserOpenURL, WindowHide } from "../../wailsjs/runtime/runtime";
+import { HideWindow, OpenFileExplorer } from "../../wailsjs/go/app/App";
+import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 
 import { UIHandler } from "../ui/uihandler";
 import { SearchMode } from "../ui/modes/search";
@@ -47,7 +47,7 @@ class StateHandler {
      * @param filePath the path for the file to be opened. If "<web-search>" opens the search result in the browser
      */
     async openFile(filePath: string): Promise<void> {
-        WindowHide();
+        HideWindow();
 
         if (filePath === "<web-search>") {
             BrowserOpenURL(`https://www.google.com/search?q=${this.uiHandler.searchBar.value}`);

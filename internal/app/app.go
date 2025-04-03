@@ -101,8 +101,14 @@ func (a *App) openOnHotKey() {
 	}
 
 	for range openHotkey.Keydown() {
-		runtime.WindowShow(a.CTX)
+		a.ShowWindow()
 	}
+}
+
+// HideWindow is a wrapper around runtime.WindowHide that ensures our cache data doesn't unnecessarily stay in memory
+func (a *App) HideWindow() {
+	runtime.WindowHide(a.CTX)
+	a.SearchHandler.ClearImportedCache()
 }
 
 // LaunchSearch starts a search on the SearchHandler of the app
@@ -135,4 +141,10 @@ func (a *App) OpenFileExplorer(filePath string) {
 	if err != nil {
 		log.Fatalf("OpenFileExplorer: couldn't file manager:\n--> %s", err.Error())
 	}
+}
+
+// ShowWindow is a wrapper around runtime.WindowShow that ensures we load our cache data into memory
+func (a *App) ShowWindow() {
+	a.SearchHandler.ImportCache()
+	runtime.WindowShow(a.CTX)
 }

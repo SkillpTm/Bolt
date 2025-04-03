@@ -14,6 +14,7 @@ import (
 	"golang.design/x/hotkey"
 
 	"github.com/skillptm/Bolt/internal/config"
+	"github.com/skillptm/Bolt/internal/logger"
 	"github.com/skillptm/Bolt/internal/modules"
 )
 
@@ -24,15 +25,18 @@ type App struct {
 	hotkey        hotkey.Key
 	icon          embed.FS
 	images        embed.FS
+	lg            *logger.Logger
 	SearchHandler *modules.SearchHandler
 }
 
 // NewApp is the constructor for App
-func NewApp(images embed.FS, icon embed.FS) (*App, error) {
+func NewApp(lg *logger.Logger, images embed.FS, icon embed.FS) (*App, error) {
 	conf, err := config.NewConfig()
 	if err != nil {
 		return nil, fmt.Errorf("NewApp: couldn't create config:\n--> %w", err)
 	}
+
+	lg.ErrorLogPath = conf.Paths["error.log"]
 
 	sh, err := modules.NewSearchHandler(conf)
 	if err != nil {
@@ -57,6 +61,7 @@ func NewApp(images embed.FS, icon embed.FS) (*App, error) {
 		icon:          icon,
 		hotkey:        keyMap[strings.ToLower(conf.ShortCutEnd)],
 		images:        images,
+		lg:            lg,
 		SearchHandler: sh,
 	}, nil
 }
@@ -134,6 +139,12 @@ func (a *App) LaunchSearch(input string) {
 	}
 
 	go a.SearchHandler.Search(input)
+}
+
+// LogErrorTS will log a message received from TS
+func (a *App) LogErrorTS(message string) {
+	fmt.Println(message)
+	a.lg.Error("%s", message)
 }
 
 // OpenFileExplorer allows you to open the file manager at any entry's location and select it (if the file manager is dolphin or nautilus)

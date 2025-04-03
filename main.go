@@ -2,14 +2,13 @@ package main
 
 import (
 	"embed"
-	"log"
 
 	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 
 	"github.com/skillptm/Bolt/internal/app"
+	"github.com/skillptm/Bolt/internal/logger"
 )
 
 var (
@@ -22,9 +21,15 @@ var (
 )
 
 func main() {
-	appInstance, err := app.NewApp(images, icon)
+	lg := &logger.Logger{}
+
+	appInstance, err := app.NewApp(lg, images, icon)
 	if err != nil {
-		log.Fatalf("main: couldn't create app:\n--> %s", err.Error())
+		if len(lg.ErrorLogPath) > 0 {
+			lg.Fatal("main: couldn't create app:\n--> %s", err.Error())
+		} else {
+			lg.Panic("main: couldn't create app:\n--> %s", err.Error())
+		}
 	}
 
 	err = wails.Run(&options.App{
@@ -39,7 +44,6 @@ func main() {
 		MaxWidth:          570,
 		MinHeight:         45,
 		MaxHeight:         365,
-		LogLevel:          logger.INFO,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
@@ -50,6 +54,6 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatal(err.Error())
+		lg.Fatal("main: wails.Run had an erroer while running:\n--> %s", err.Error())
 	}
 }

@@ -2,7 +2,7 @@ import "../styles/main.css";
 import "../styles/searchicons.css";
 import "../styles/component.css";
 
-import { HideWindow, LaunchSearch } from "../wailsjs/go/app/App";
+import { HideWindow, LaunchSearch, LogErrorTS } from "../wailsjs/go/app/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 
 import { StateHandler } from "./app/statehandler";
@@ -63,4 +63,23 @@ stateHandler.uiHandler.searchBar.addEventListener("input", async () => {
 // when Go found results receive, handle and display them
 EventsOn("searchResult", (results: string[]) => {
     stateHandler.searchMode.newResults(results);
+});
+
+// catches all synchronous errors and passes them for error logging to Go
+window.onerror = function (_message, source, lineno, colno, error) {
+    LogErrorTS(
+        `${source ?? "Unknown Source"}: ${lineno ?? "?"}, ${colno ?? "?"}:`.replaceAll("\n", " ") + "\n" +
+        `--> ${error?.message ?? "unknown error"}:`.replaceAll("\n", " ") + "\n" +
+        `[TS] ${error?.name ?? "Error"}`.replaceAll("\n", " ")
+    );
+    return true;
+};
+
+// catches all Promise errors and passes them for error logging to Go
+window.addEventListener("unhandledrejection", (event) => {
+    LogErrorTS(
+        `${event.reason?.stack ?? "Unknown Source"}`.replaceAll("\n", " ") + "\n" +
+        `--> ${event.reason?.message ?? event.reason ?? "unknown error"}`.replaceAll("\n", " ") + "\n" +
+        `[TS] Promise Rejection: ${event.reason?.name ?? "Error"}`.replaceAll("\n", " ")
+    );
 });

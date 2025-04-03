@@ -134,7 +134,7 @@ func (fs *Filesystem) Update(dirs *Dirs, otherDirs *Dirs) {
 }
 
 // check finds out if the provided Directory breaks any of the name, path or regex rules
-func (dr *dirsRules) check(dirPath string, add bool, dirs *Dirs) (bool, error) {
+func (dr *dirsRules) check(dirPath string, add bool, dirs *Dirs) bool {
 	addPath := func() {
 		if !add {
 			return
@@ -146,24 +146,22 @@ func (dr *dirsRules) check(dirPath string, add bool, dirs *Dirs) (bool, error) {
 
 	if dr.path[dirPath] {
 		addPath()
-		return false, nil
+		return false
 	}
 
 	if dr.name[path.Base(dirPath)] {
 		addPath()
-		return false, nil
+		return false
 	}
 
 	for _, pattern := range dr.regex {
-		if matched, err := regexp.MatchString(pattern, dirPath); matched {
+		if matched, _ := regexp.MatchString(pattern, dirPath); matched {
 			addPath()
-			return false, nil
-		} else if err != nil {
-			return false, fmt.Errorf("check: couldn't match pattern %s:\n--> %w", pattern, err)
+			return false
 		}
 	}
 
-	return true, nil
+	return true
 }
 
 // autoUpdateCache automatically updates both the DefaultDirs and ExtendedDirs
@@ -201,11 +199,11 @@ func (fs *Filesystem) traverse(pathQueue chan string, results chan<- basicFile, 
 
 				entryPath := fmt.Sprintf("%s%s", filepath.Join(currentDir, entry.Name()), string(filepath.Separator))
 
-				if checked, err := fs.excludedDirs.check(entryPath, false, &fs.ExtendedDirs); !checked || err != nil {
+				if checked := fs.excludedDirs.check(entryPath, false, &fs.ExtendedDirs); !checked {
 					continue
 				}
 
-				if checked, err := fs.excludeFromDefaultDirs.check(entryPath, true, &fs.ExtendedDirs); !checked || err != nil {
+				if checked := fs.excludeFromDefaultDirs.check(entryPath, true, &fs.ExtendedDirs); !checked {
 					continue
 				}
 

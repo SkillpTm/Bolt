@@ -7,12 +7,13 @@ import { WindowSetSize } from "../../wailsjs/runtime/runtime";
  * Section of the UI below the search bar.
  *
  * A component looks like this in html:
- * <div id="component1" class="hide">
+ * <div id="component1" class="hide tooltip">
  *     <img id="component1-image" class="compImg">
  *     <div id="component1-text" class="compText">
  *         <div id="component1-name" class="compName"></div>
  *         <div id="component1-seperator" class="compSep"></div>
  *         <span id="component1-value" class="compValue"></span>
+ *         <span id="component1-tooltip" class="tooltiptext"></span>
  *     </div>
  * </div>
  * 
@@ -27,6 +28,8 @@ import { WindowSetSize } from "../../wailsjs/runtime/runtime";
  * @param seperator small line between text and name
  * 
  * @param value component value, right of seperator
+ * 
+ * @param tooltip component to hold the tooltip text
  */
 interface Component {
     self: HTMLDivElement;
@@ -35,6 +38,7 @@ interface Component {
     name: HTMLDivElement;
     seperator: HTMLDivElement;
     value: HTMLSpanElement;
+    tooltip: HTMLSpanElement;
 }
 
 /**
@@ -104,16 +108,18 @@ class UIHandler {
         this.components = [] as Array<Component>;
 
         for (let index = 0; index < max; index++) {
-            const newWrapper = this.#makeElement("div", `component${index+1}`, ["hide"]) as HTMLDivElement;
+            const newWrapper = this.#makeElement("div", `component${index+1}`, ["hide", "tooltip"]) as HTMLDivElement;
             const newSubImage = this.#makeElement("img", `component${index+1}-image`, ["compImg"]) as HTMLImageElement;
             const newTextDiv = this.#makeElement("div", `component${index+1}-text`, ["compText"]) as HTMLDivElement;
             const newNameDiv = this.#makeElement("div", `component${index+1}-name`, ["compName"]) as HTMLDivElement;
             const newTextSeperator = this.#makeElement("div", `component${index+1}-seperator`, ["compSep"]) as HTMLDivElement;
             const newTextSpan = this.#makeElement("span", `component${index+1}-value`, ["compValue"]) as HTMLSpanElement;
+            const newToolTipSpan = this.#makeElement("span", `component${index+1}-tooltip`, ["tooltiptext"]) as HTMLSpanElement;
 
             newTextDiv.appendChild(newNameDiv);
             newTextDiv.appendChild(newTextSeperator);
             newTextDiv.appendChild(newTextSpan);
+            newTextDiv.appendChild(newToolTipSpan);
             newWrapper.appendChild(newSubImage);
             newWrapper.appendChild(newTextDiv);
             document.body.appendChild(newWrapper);
@@ -126,6 +132,7 @@ class UIHandler {
                     name: newNameDiv,
                     seperator: newTextSeperator,
                     value: newTextSpan,
+                    tooltip: newToolTipSpan,
                 } as Component
             );
         }

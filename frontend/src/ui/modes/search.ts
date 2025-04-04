@@ -140,6 +140,7 @@ class SearchMode {
                 this.uiHandler.components[index].image.src = this.uiHandler.images.get("file") as string;
             }
 
+            this.uiHandler.components[index].tooltip.textContent = filePath.join("/") as string;
             this.uiHandler.components[index].name.textContent = filePath.pop() as string;
             this.uiHandler.components[index].value.textContent = filePath.join("/") + "/";
 

@@ -1,5 +1,5 @@
 /* one component takes 570x40 */
-.showComp {
+.show {
     display: flex;
 
     width: 570px;
@@ -8,15 +8,15 @@
     cursor: pointer;
 }
 
-.showComp:hover {
+.show:hover {
     background-color: var(--hover-gray);
 }
 
-.highligthed {
+.highlighted {
     background-color: var(--highlight-gray);
 }
 
-.highligthed:hover {
+.highlighted:hover {
     background-color: var(--highlight-gray);
 }
 
@@ -73,8 +73,8 @@
     color: var(--gray);
 }
 
-.webSearch {
-    color: rgb(40, 153, 255); 
+.browserInteract {
+    color: var(--blue); 
 }
 
 .tooltip {

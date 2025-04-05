@@ -4,6 +4,8 @@
     --highlight-gray: rgb(78, 78, 78);
     --hover-gray: rgb(67, 67, 67);
     --dark-gray: rgb(34, 34, 34);
+
+    --blue: rgb(40, 153, 255);
 }
 
 body {
@@ -14,8 +16,6 @@ body {
     font-family: Arial, sans-serif;
     background-color: var(--dark-gray);
 }
-
-/* <----------------------------------------------------------------------------------------------------> */
 
 /* the nav bar takes 570x44 */
 #nav-bar {

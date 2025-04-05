@@ -1,49 +1,42 @@
-export { SearchMode }
+export { SearchModule }
+
+import { LaunchSearch } from "../../../wailsjs/go/app/App";
 
 import { Component, UIHandler } from "../uihandler";
 
 /**
  * Is in task of anything related to the search's UI.
  * 
- * @param uiHandler main uiHandler user to access its base functions and properties
- * 
- * @param highlightedComp private property, the currently highlihted component
- * 
  * @param maxResultsDispalyed private property, how many results can be displayed at once
- * 
- * @param results private property, holds all current results
  * 
  * @param resultPage private property, current page of the results we're on
  * 
+ * @param results private property, holds all current results
+ * 
  * @param searching private property, state of if we're searching right now
+ * 
+ * @param uiHandler main uiHandler user to access its base functions and properties
  */
-class SearchMode {
+class SearchModule {
+    #maxDisplayedResults = 0;
+    #resultPage = 0;
+    results: Array<string> = [];
+    #searching = false;
     uiHandler!: UIHandler;
 
-    #highlightedComp = 0;
-    #maxResultsDispalyed = 0;
-    #results: Array<string> = [];
-    #resultPage = 0;
-    #searching = false;
-
-    /**
-     * Sets the uiHandler as a property. Also adds event listeners for the page buttons to the left and right icons.
-     *
-     * @param uiHandler the main uiHandler used throught the app
-     */
-    constructor(uiHandler: UIHandler) {
+    constructor(uiHandler: UIHandler, maxDisplayedResults: number) {
         this.uiHandler = uiHandler;
-        this.#maxResultsDispalyed = this.uiHandler.components.length - 2;
+        this.#maxDisplayedResults = maxDisplayedResults;
 
-        this.uiHandler.leftIcon.addEventListener("mouseenter", () => {this.updateLeftRightIcons(true, true);});
-        this.uiHandler.leftIcon.addEventListener("mouseleave", () => {this.updateLeftRightIcons(false, true);});
+        this.uiHandler.leftIcon.addEventListener("mouseenter", () => {this.updateLeftRightIcons(true, true)});
+        this.uiHandler.leftIcon.addEventListener("mouseleave", () => {this.updateLeftRightIcons(false, true)});
         this.uiHandler.leftIcon.addEventListener("click", () => {
             this.updatePage(-1);
             this.updateLeftRightIcons(true, true);
         });
 
-        this.uiHandler.rightIcon.addEventListener("mouseenter", () => {this.updateLeftRightIcons(true, false);});
-        this.uiHandler.rightIcon.addEventListener("mouseleave", () => {this.updateLeftRightIcons(false, false);});
+        this.uiHandler.rightIcon.addEventListener("mouseenter", () => {this.updateLeftRightIcons(true, false)});
+        this.uiHandler.rightIcon.addEventListener("mouseleave", () => {this.updateLeftRightIcons(false, false)});
         this.uiHandler.rightIcon.addEventListener("click", () => {
             this.updatePage(1);
             this.updateLeftRightIcons(true, false);
@@ -53,13 +46,15 @@ class SearchMode {
     /**
      * Removes any image from the right icon and starts the loading animation.
      */
-    newSearch(): void {
+    async newInput(): Promise<void> {
         this.#searching = true;
         this.uiHandler.rightIcon.src = "";
 
         this.uiHandler.rightSection.classList.add("loading-grid");
         this.uiHandler.rightSection.classList.remove("hide");
         this.uiHandler.rightIcon.classList.add("hide");
+
+        await LaunchSearch(this.uiHandler.searchBar.value);
     }
 
     /**
@@ -69,7 +64,7 @@ class SearchMode {
      */
     newResults(results: Array<string>): void {
         this.#searching = false;
-        this.#results = results;
+        this.results = results;
 
         this.updatePage(0);
     }
@@ -87,7 +82,7 @@ class SearchMode {
         }
 
         // if the new page would be out of bounds we simply don't change the resultPage value
-        if ((this.#resultPage + change) * (this.#maxResultsDispalyed) > (this.#results.length - 1)) {
+        if ((this.#resultPage + change) * (this.#maxDisplayedResults) > (this.results.length - 1)) {
             return;
         }
 
@@ -108,80 +103,43 @@ class SearchMode {
         this.uiHandler.rightSection.classList.add("hide");
         this.uiHandler.rightIcon.classList.remove("hide");
 
-        if (this.uiHandler.displayedComps > 0) {
-            this.uiHandler.components[this.uiHandler.displayedComps-1].value.classList.remove("webSearch");
-        }
-
         if (this.uiHandler.searchBar.value.length === 0) {
             this.uiHandler.resetUI();
             return;
         }
 
-        if (this.#results.length > 0) {
+        if (this.results.length > 0) {
             this.uiHandler.rightIcon.src = this.uiHandler.images.get("tick") as string;
         } else {
             this.uiHandler.rightIcon.src = this.uiHandler.images.get("cross") as string;
         }
 
-        // is set to 1, because we always want to at least display the web search component
-        let displayAmount = 1;
+        const displayComps: Array<number> = [];
 
-        for (let index = 0; index < this.#results.length - (this.#resultPage * this.#maxResultsDispalyed) && index < (this.#maxResultsDispalyed); index++) {
-            const currentFile = index + (this.#resultPage * (this.#maxResultsDispalyed));
+        for (let index = 0; index < this.results.length - (this.#resultPage * this.#maxDisplayedResults) && index < (this.#maxDisplayedResults); index++) {
+            const currentFile = index + (this.#resultPage * (this.#maxDisplayedResults));
 
-            let filePath = this.#results[currentFile].split("/");
+            const filePath = this.results[currentFile].split("/");
 
-            if (this.#results[currentFile].endsWith("/")) {
+            if (this.results[currentFile].endsWith("/")) {
                 // pop empty element
                 filePath.pop();
 
-                this.uiHandler.components[index].image.src = this.uiHandler.images.get("folder") as string;
+                this.uiHandler.components[index+1].image.src = this.uiHandler.images.get("folder") as string;
             } else {
-                this.uiHandler.components[index].image.src = this.uiHandler.images.get("file") as string;
+                this.uiHandler.components[index+1].image.src = this.uiHandler.images.get("file") as string;
             }
 
-            this.uiHandler.components[index].tooltip.textContent = filePath.join("/") as string;
-            this.uiHandler.components[index].name.textContent = filePath.pop() as string;
-            this.uiHandler.components[index].value.textContent = filePath.join("/") + "/";
+            this.uiHandler.components[index+1].tooltip.textContent = filePath.join("/") as string;
+            this.uiHandler.components[index+1].name.textContent = filePath.pop() as string;
+            this.uiHandler.components[index+1].value.textContent = filePath.join("/") + "/";
 
-            displayAmount++;
+            displayComps.push(index+1);
         }
 
-        this.#insertWebSearch(displayAmount-1);
-
-        this.updateHighlightedComp(0);
-        this.uiHandler.displayComponents(displayAmount);
-    }
-
-    /**
-     * Takes the provided component (which should always be the last to be displayed) and turns it into a web search specific result.
-     *
-     * @param index the index of the component on the uiHandler to be modified
-     */
-    #insertWebSearch(index: number) {
-        this.uiHandler.components[index].image.src = this.uiHandler.images.get("google") as string;
-        this.uiHandler.components[index].name.textContent = this.uiHandler.searchBar.value;
-        this.uiHandler.components[index].value.textContent = "Search on Google";
-        this.uiHandler.components[index].value.classList.add("webSearch");
-    }
-
-    /**
-     * Updates the higlighted component
-     *
-     * @param change increase/decrease to component position, 0 resets it back to 0. In case of an overflow to the max components it rolls back to 0 and the other way around.
-     */
-    updateHighlightedComp(change: number): void {
-        this.uiHandler.components[this.#highlightedComp].self.classList.remove("highligthed");
-
-        if (change === 0) {
-            this.#highlightedComp = 0;
-        } else if (change < 0) {
-            this.#highlightedComp = (this.#highlightedComp + change + this.uiHandler.displayedComps) % this.uiHandler.displayedComps;
-        } else {
-            this.#highlightedComp = (this.#highlightedComp + change) % this.uiHandler.displayedComps;
-        }
-
-        this.uiHandler.components[this.#highlightedComp].self.classList.add("highligthed");
+        // the 2nd input produces an array with all values between 1-7 that aren't in displayComps
+        this.uiHandler.displayComponents(displayComps, Array.from({length: 6}, (_, i) => i+1).filter(item => !displayComps.includes(item)));
+        this.uiHandler.updateHighlightedComp(undefined, true);
     }
 
     /**
@@ -190,12 +148,7 @@ class SearchMode {
      * @returns the full path of highlighted component.
      */
     getHighlightedFile(): string {
-        // the last component is always the web search
-        if (this.#highlightedComp === (this.uiHandler.displayedComps - 1)) {
-            return "<web-search>";
-        } else {
-            return this.#results[this.#resultPage * (this.#maxResultsDispalyed) + this.#highlightedComp];
-        }
+        return this.uiHandler.components[this.uiHandler.getHighlightedComp()].tooltip.textContent as string;
     }
 
     /**
@@ -206,11 +159,7 @@ class SearchMode {
      * @returns the full path of hovered over component.
      */
     getHoveredFile(comp: Component): string {
-        if ((parseInt(comp.self.id[9]) - 1) === (this.uiHandler.displayedComps - 1)) {
-            return "<web-search>";
-        } else {
-            return this.#results[this.#resultPage * (this.#maxResultsDispalyed) + (parseInt(comp.self.id[9]) -1)];
-        }
+        return comp.tooltip.textContent as string;
     }
 
     /**
@@ -222,7 +171,7 @@ class SearchMode {
      */
     updateLeftRightIcons(mouseEnter: boolean, left: boolean): void {
         // check, if we're in a state, in which the arrows shouldn't appear
-        if (this.uiHandler.searchBar.value.length === 0 || this.#results.length === 0 || this.#searching || !mouseEnter) {
+        if (this.uiHandler.searchBar.value.length === 0 || this.results.length === 0 || this.#searching || !mouseEnter) {
             if (left) {
                 this.uiHandler.leftIcon.classList.remove("icon-clickable");
 
@@ -230,7 +179,7 @@ class SearchMode {
             } else {
                 this.uiHandler.rightIcon.classList.remove("icon-clickable");
 
-                if (this.#results.length > 0) {
+                if (this.results.length > 0) {
                     this.uiHandler.rightIcon.src = this.uiHandler.images.get("tick") as string;
                 } else {
                     this.uiHandler.rightIcon.src = this.uiHandler.images.get("cross") as string;
@@ -248,7 +197,7 @@ class SearchMode {
             } else {
                 this.uiHandler.rightIcon.classList.add("icon-clickable");
     
-                if (this.#resultPage * this.#maxResultsDispalyed + this.uiHandler.displayedComps < (this.#results.length - 1)) {
+                if (this.#resultPage * this.#maxDisplayedResults + this.uiHandler.getDisplayedComps().length < (this.results.length-1)) {
                     this.uiHandler.rightIcon.src = this.uiHandler.images.get("right") as string;
                 } else {
                     this.uiHandler.rightIcon.src = this.uiHandler.images.get("not-right") as string;

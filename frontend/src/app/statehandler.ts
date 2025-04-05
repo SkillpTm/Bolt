@@ -1,58 +1,93 @@
-export {StateHandler}
+export { StateHandler }
 
 import { HideWindow, OpenFileExplorer } from "../../wailsjs/go/app/App";
-import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
+import { BrowserOpenURL, WindowSetSize } from "../../wailsjs/runtime/runtime";
 
-import { UIHandler } from "../ui/uihandler";
-import { SearchMode } from "../ui/modes/search";
+import { Component, UIHandler } from "../ui/uihandler";
+import { SearchModule } from "../ui/modes/search";
+import { LinkModule } from "../ui/modes/link";
 
 /**
  * Holds the uiHandler and all the UI modes.
  * 
- * @param uiHandler the main uiHandler used to manipulate the UI
+ * @param linkModule the module in charge of detection and displaying link opens
  * 
- * @param searchMode mode used to change the UI depending on the search state
+ * @param searchMode module used to change the UI depending on the search state
+ * 
+ * @param uiHandler the main uiHandler used to manipulate the UI
  */
 class StateHandler {
+    linkModule!: LinkModule;
+    searchMode!: SearchModule;
     uiHandler!: UIHandler;
-    searchMode!: SearchMode;
 
-    /**
-     * Sets the uiHandler as a property and adds the property: Search.
-     */
     constructor() {
         this.uiHandler = new UIHandler(8);
-        this.searchMode = new SearchMode(this.uiHandler);
+        this.searchMode = new SearchModule(this.uiHandler, 6);
+        this.linkModule = new LinkModule(this.uiHandler, 0);
 
         this.uiHandler.components.forEach((comp) => {
             comp.self.addEventListener("click", async () => {
-                await this.openFile(this.searchMode.getHoveredFile(comp));
+                await this.routeAction(comp);
             });
         });
 
-        this.reset()
+        // send the current input to Go to search the file system
+        this.uiHandler.searchBar.addEventListener("input", async () => {
+            this.handleInput();
+        });
+
+        // if the input bar is not selected anymore the user selected another window, so we hide
+        this.uiHandler.searchBar.addEventListener("blur", () => {
+            setTimeout(() => {
+                if (document.activeElement === this.uiHandler.searchBar) {
+                    HideWindow();
+                    this.reset();
+                }
+            }, 50);
+        });
+
+        this.reset();
     }
 
     /**
-     * resets the ui and state of the frontend
+     * Essentially acts as an event to act upon a new input
+     */
+    async handleInput(): Promise<void> {
+        this.uiHandler.displayComponents(undefined, Array.from({length: 8}, (_, i) => i));
+        await this.searchMode.newInput();
+        this.linkModule.newInput();
+    }
+
+    /**
+     * Resets the ui and state of the frontend
      */
     reset(): void {
         this.uiHandler.resetUI();
-        this.searchMode.newResults([] as Array<string>);
+        this.searchMode.newResults(new Array<string>);
+
+        WindowSetSize(570, this.uiHandler.topBarHeight + this.uiHandler.getDisplayedComps().length * this.uiHandler.componentHeight);
     }
 
     /**
-     * Open the given file with a file manager/the search result in the browser and hide the search window.
-     *
-     * @param filePath the path for the file to be opened. If "<web-search>" opens the search result in the browser
+     * Handles enter/left click to open the file manager/browser
+     * 
+     * @param clickComp if this was started by a left click, this is the clicked component
      */
-    async openFile(filePath: string): Promise<void> {
+    async routeAction(clickComp?: Component): Promise<void> {
         HideWindow();
 
-        if (filePath === "<web-search>") {
-            BrowserOpenURL(`https://www.google.com/search?q=${this.uiHandler.searchBar.value}`);
+        let currentComp: Component;
+        if (clickComp) {
+            currentComp = clickComp;
         } else {
-            await OpenFileExplorer(filePath);
+            currentComp = this.uiHandler.components[this.uiHandler.getHighlightedComp()];
+        }
+
+        if (this.linkModule.isWebsite.test(this.uiHandler.searchBar.value.trim())) {
+            BrowserOpenURL(this.uiHandler.searchBar.value.trim());
+        } else if (this.searchMode.results.length > 0) {
+            await OpenFileExplorer(currentComp.tooltip.textContent as string);
         }
 
         this.reset();

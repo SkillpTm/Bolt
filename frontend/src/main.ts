@@ -2,8 +2,8 @@ import "../styles/main.css";
 import "../styles/searchicons.css";
 import "../styles/component.css";
 
-import { HideWindow, LaunchSearch, LogErrorTS } from "../wailsjs/go/app/App";
-import { EventsOn } from "../wailsjs/runtime/runtime";
+import { LogErrorTS } from "../wailsjs/go/app/App";
+import { EventsOn, WindowSetSize } from "../wailsjs/runtime/runtime";
 
 import { StateHandler } from "./app/statehandler";
 
@@ -25,17 +25,6 @@ document.addEventListener("click", () => {
     stateHandler.uiHandler.searchBar.focus();
 });
 
-// if the input bar is not selected anymore the user selected another window, so we hide
-stateHandler.uiHandler.searchBar.addEventListener("blur", () => {
-    setTimeout(() => {
-        if (document.activeElement === stateHandler.uiHandler.searchBar) {
-            HideWindow();
-            stateHandler.reset();
-        }
-      }, 50);
-}),
-
-// move the highlighted section with arrow keys and open a file with enter
 document.addEventListener("keydown", async (event) => {
     if (event.ctrlKey && event.key === "ArrowUp") {
         event.preventDefault()
@@ -45,24 +34,19 @@ document.addEventListener("keydown", async (event) => {
         stateHandler.searchMode.updatePage(1);
     } else if (event.key === "ArrowUp") {
         event.preventDefault()
-        stateHandler.searchMode.updateHighlightedComp(-1);
+        stateHandler.uiHandler.updateHighlightedComp(false);
     } else if (event.key === "ArrowDown") {
         event.preventDefault()
-        stateHandler.searchMode.updateHighlightedComp(1);
+        stateHandler.uiHandler.updateHighlightedComp(true);
     } else if (event.key === "Enter") {
-        await stateHandler.openFile(stateHandler.searchMode.getHighlightedFile());
+        await stateHandler.routeAction();
     }
-});
-
-// send the current input to Go to search the file system
-stateHandler.uiHandler.searchBar.addEventListener("input", async () => {
-    stateHandler.searchMode.newSearch();
-    await LaunchSearch(stateHandler.uiHandler.searchBar.value);
 });
 
 // when Go found results receive, handle and display them
 EventsOn("searchResult", (results: string[]) => {
     stateHandler.searchMode.newResults(results);
+    WindowSetSize(570, stateHandler.uiHandler.topBarHeight + stateHandler.uiHandler.getDisplayedComps().length * stateHandler.uiHandler.componentHeight);
 });
 
 // catches all synchronous errors and passes them for error logging to Go

@@ -4,8 +4,8 @@ import { HideWindow, OpenFileExplorer } from "../../wailsjs/go/app/App";
 import { BrowserOpenURL, WindowSetSize } from "../../wailsjs/runtime/runtime";
 
 import { Component, UIHandler } from "../ui/uihandler";
-import { SearchModule } from "../ui/modes/search";
-import { LinkModule } from "../ui/modes/link";
+import { SearchModule } from "../ui/modules/search";
+import { LinkModule } from "../ui/modules/link";
 
 /**
  * Holds the uiHandler and all the UI modes.

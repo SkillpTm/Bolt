@@ -1,13 +1,9 @@
 {
-  "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "Bolt",
-  "outputfilename": "Bolt",
-  "frontend:install": "npm install",
-  "frontend:build": "npm run build",
-  "frontend:dev:watcher": "npm run dev",
-  "frontend:dev:serverUrl": "auto",
-  "author": {
-    "name": "SkillpTm",
-    "email": "99091714+SkillpTm@users.noreply.github.com"
-  }
+	"$schema": "https://wails.io/schemas/config.v2.json",
+	"name": "Bolt",
+	"outputfilename": "Bolt",
+	"frontend:install": "npm install",
+	"frontend:build": "sudo npm run build",
+	"frontend:dev:watcher": "npm run dev",
+	"frontend:dev:serverUrl": "auto"
 }

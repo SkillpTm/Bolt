@@ -1,5 +1,3 @@
-export { StateHandler }
-
 import { HideWindow, OpenFileExplorer } from "../../wailsjs/go/app/App";
 import { BrowserOpenURL, WindowSetSize } from "../../wailsjs/runtime/runtime";
 
@@ -17,79 +15,83 @@ import { LinkModule } from "../ui/modules/link";
  * @param uiHandler the main uiHandler used to manipulate the UI
  */
 class StateHandler {
-    linkModule!: LinkModule;
-    searchMode!: SearchModule;
-    uiHandler!: UIHandler;
+	linkModule!: LinkModule;
 
-    constructor() {
-        this.uiHandler = new UIHandler(8);
-        this.searchMode = new SearchModule(this.uiHandler, 6);
-        this.linkModule = new LinkModule(this.uiHandler, 0);
+	searchMode!: SearchModule;
 
-        this.uiHandler.components.forEach((comp) => {
-            comp.self.addEventListener("click", async () => {
-                await this.routeAction(comp);
-            });
-        });
+	uiHandler!: UIHandler;
 
-        // send the current input to Go to search the file system
-        this.uiHandler.searchBar.addEventListener("input", async () => {
-            this.handleInput();
-        });
+	constructor() {
+		this.uiHandler = new UIHandler(8);
+		this.searchMode = new SearchModule(this.uiHandler, 6);
+		this.linkModule = new LinkModule(this.uiHandler, 0);
 
-        // if the input bar is not selected anymore the user selected another window, so we hide
-        this.uiHandler.searchBar.addEventListener("blur", () => {
-            setTimeout(() => {
-                if (document.activeElement === this.uiHandler.searchBar) {
-                    HideWindow();
-                    this.reset();
-                }
-            }, 50);
-        });
+		this.uiHandler.components.forEach((comp) => {
+			comp.self.addEventListener("click", async () => {
+				await this.routeAction(comp);
+			});
+		});
 
-        this.reset();
-    }
+		// send the current input to Go to search the file system
+		this.uiHandler.searchBar.addEventListener("input", async () => {
+			this.handleInput();
+		});
 
-    /**
-     * Essentially acts as an event to act upon a new input
-     */
-    async handleInput(): Promise<void> {
-        this.uiHandler.displayComponents(undefined, Array.from({length: 8}, (_, i) => i));
-        await this.searchMode.newInput();
-        this.linkModule.newInput();
-    }
+		// if the input bar is not selected anymore the user selected another window, so we hide
+		this.uiHandler.searchBar.addEventListener("blur", () => {
+			setTimeout(() => {
+				if (document.activeElement === this.uiHandler.searchBar) {
+					HideWindow();
+					this.reset();
+				}
+			}, 50);
+		});
 
-    /**
-     * Resets the ui and state of the frontend
-     */
-    reset(): void {
-        this.uiHandler.resetUI();
-        this.searchMode.newResults(new Array<string>);
+		this.reset();
+	}
 
-        WindowSetSize(570, this.uiHandler.topBarHeight + this.uiHandler.getDisplayedComps().length * this.uiHandler.componentHeight);
-    }
+	/**
+	 * Essentially acts as an event to act upon a new input
+	 */
+	async handleInput(): Promise<void> {
+		this.uiHandler.displayComponents(undefined, Array.from({ length: 8 }, (_, i) => i));
+		await this.searchMode.newInput();
+		this.linkModule.newInput();
+	}
 
-    /**
-     * Handles enter/left click to open the file manager/browser
-     * 
-     * @param clickComp if this was started by a left click, this is the clicked component
-     */
-    async routeAction(clickComp?: Component): Promise<void> {
-        HideWindow();
+	/**
+	 * Resets the ui and state of the frontend
+	 */
+	reset(): void {
+		this.uiHandler.resetUI();
+		this.searchMode.newResults(new Array<string>);
 
-        let currentComp: Component;
-        if (clickComp) {
-            currentComp = clickComp;
-        } else {
-            currentComp = this.uiHandler.components[this.uiHandler.getHighlightedComp()];
-        }
+		WindowSetSize(570, this.uiHandler.topBarHeight + this.uiHandler.getDisplayedComps().length * this.uiHandler.componentHeight);
+	}
 
-        if (this.linkModule.isWebsite.test(this.uiHandler.searchBar.value.trim())) {
-            BrowserOpenURL(this.uiHandler.searchBar.value.trim());
-        } else if (this.searchMode.results.length > 0) {
-            await OpenFileExplorer(currentComp.tooltip.textContent as string);
-        }
+	/**
+	 * Handles enter/left click to open the file manager/browser
+	 * 
+	 * @param clickComp if this was started by a left click, this is the clicked component
+	 */
+	async routeAction(clickComp?: Component): Promise<void> {
+		HideWindow();
 
-        this.reset();
-    }
+		let currentComp: Component;
+		if (clickComp) {
+			currentComp = clickComp;
+		} else {
+			currentComp = this.uiHandler.components[this.uiHandler.getHighlightedComp()];
+		}
+
+		if (this.linkModule.isWebsite.test(this.uiHandler.searchBar.value.trim())) {
+			BrowserOpenURL(this.uiHandler.searchBar.value.trim());
+		} else if (this.searchMode.results.length > 0) {
+			await OpenFileExplorer(currentComp.tooltip.textContent as string);
+		}
+
+		this.reset();
+	}
 }
+
+export { StateHandler };

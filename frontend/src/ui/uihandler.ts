@@ -1,5 +1,3 @@
-export { Component, UIHandler };
-
 import { GetImageData } from "../../wailsjs/go/app/App";
 
 /**
@@ -31,70 +29,76 @@ import { GetImageData } from "../../wailsjs/go/app/App";
  * @param tooltip component to hold the tooltip text
  */
 class Component {
-    self: HTMLDivElement;
-    image: HTMLImageElement;
-    text: HTMLDivElement;
-    name: HTMLDivElement;
-    seperator: HTMLDivElement;
-    value: HTMLSpanElement;
-    tooltip: HTMLSpanElement;
+	self: HTMLDivElement;
 
-    constructor(index: number) {
-        const newWrapper = this.#makeElement("div", `component${index}`, ["hide", "tooltip"]) as HTMLDivElement;
-        const newSubImage = this.#makeElement("img", `component${index}-image`, ["compImg"]) as HTMLImageElement;
-        const newTextDiv = this.#makeElement("div", `component${index}-text`, ["compText"]) as HTMLDivElement;
-        const newNameDiv = this.#makeElement("div", `component${index}-name`, ["compName"]) as HTMLDivElement;
-        const newTextSeperator = this.#makeElement("div", `component${index}-seperator`, ["compSep"]) as HTMLDivElement;
-        const newTextSpan = this.#makeElement("span", `component${index}-value`, ["compValue"]) as HTMLSpanElement;
-        const newToolTipSpan = this.#makeElement("span", `component${index}-tooltip`, ["tooltiptext"]) as HTMLSpanElement;
+	image: HTMLImageElement;
 
-        newTextDiv.appendChild(newNameDiv);
-        newTextDiv.appendChild(newTextSeperator);
-        newTextDiv.appendChild(newTextSpan);
-        newTextDiv.appendChild(newToolTipSpan);
-        newWrapper.appendChild(newSubImage);
-        newWrapper.appendChild(newTextDiv);
-        document.body.appendChild(newWrapper);
+	text: HTMLDivElement;
 
-        this.self = newWrapper;
-        this.image = newSubImage;
-        this.text = newTextDiv;
-        this.name = newNameDiv;
-        this.seperator = newTextSeperator;
-        this.value = newTextSpan;
-        this.tooltip = newToolTipSpan;
-    }
+	name: HTMLDivElement;
 
-    /**
-     * Makes an HTML element with an id and classes.
-     *
-     * @param tagName the html tag you want to create
-     * 
-     * @param id the id this element should have
-     * 
-     * @param classes the classes the element should have
-     * 
-     * @returns HTMLElement with the id and classes attached.
-     */
-    #makeElement(tagName: string, id: string, classes: Array<string>): HTMLElement {
-        const newElement = document.createElement(tagName);
-        newElement.id = id;
+	seperator: HTMLDivElement;
 
-        classes.forEach(newClass => {
-            newElement.classList.add(newClass);
-        });
-        
-        return newElement;
-    }
+	value: HTMLSpanElement;
 
-    /**
-     * gets the index added to the id of the component
-     * 
-     * @returns index of the component
-     */
-    getIndex(): number {
-        return parseInt(this.self.id[9]);
-    }
+	tooltip: HTMLSpanElement;
+
+	constructor(index: number) {
+		const newWrapper = this.#makeElement("div", `component${index}`, ["hide", "tooltip"]) as HTMLDivElement;
+		const newSubImage = this.#makeElement("img", `component${index}-image`, ["compImg"]) as HTMLImageElement;
+		const newTextDiv = this.#makeElement("div", `component${index}-text`, ["compText"]) as HTMLDivElement;
+		const newNameDiv = this.#makeElement("div", `component${index}-name`, ["compName"]) as HTMLDivElement;
+		const newTextSeperator = this.#makeElement("div", `component${index}-seperator`, ["compSep"]) as HTMLDivElement;
+		const newTextSpan = this.#makeElement("span", `component${index}-value`, ["compValue"]) as HTMLSpanElement;
+		const newToolTipSpan = this.#makeElement("span", `component${index}-tooltip`, ["tooltiptext"]) as HTMLSpanElement;
+
+		newTextDiv.appendChild(newNameDiv);
+		newTextDiv.appendChild(newTextSeperator);
+		newTextDiv.appendChild(newTextSpan);
+		newTextDiv.appendChild(newToolTipSpan);
+		newWrapper.appendChild(newSubImage);
+		newWrapper.appendChild(newTextDiv);
+		document.body.appendChild(newWrapper);
+
+		this.self = newWrapper;
+		this.image = newSubImage;
+		this.text = newTextDiv;
+		this.name = newNameDiv;
+		this.seperator = newTextSeperator;
+		this.value = newTextSpan;
+		this.tooltip = newToolTipSpan;
+	}
+
+	/**
+	 * Makes an HTML element with an id and classes.
+	 *
+	 * @param tagName the html tag you want to create
+	 * 
+	 * @param id the id this element should have
+	 * 
+	 * @param classes the classes the element should have
+	 * 
+	 * @returns HTMLElement with the id and classes attached.
+	 */
+	#makeElement(tagName: string, id: string, classes: Array<string>): HTMLElement {
+		const newElement = document.createElement(tagName);
+		newElement.id = id;
+
+		classes.forEach(newClass => {
+			newElement.classList.add(newClass);
+		});
+
+		return newElement;
+	}
+
+	/**
+	 * gets the index added to the id of the component
+	 * 
+	 * @returns index of the component
+	 */
+	getIndex(): number {
+		return parseInt(this.self.id[9]);
+	}
 }
 
 /**
@@ -117,127 +121,134 @@ class Component {
  * @param images map of the base64 image data needed to embed for the html
  */
 class UIHandler {
-    readonly topBarHeight = 45;
-    readonly componentHeight = 40;
+	readonly topBarHeight = 45;
 
-    readonly leftIcon = document.getElementById("left-icon") as HTMLImageElement;
-    readonly searchBar = document.getElementById("search-bar") as HTMLInputElement;
-    readonly rightSection = document.getElementById("right-section") as HTMLDivElement;
-    readonly rightIcon = document.getElementById("right-icon") as HTMLImageElement;
+	readonly componentHeight = 40;
 
-    components: Array<Component> = [];
-    images: Map<string, string> = new Map();
+	readonly leftIcon = document.getElementById("left-icon") as HTMLImageElement;
 
-    constructor(max: number) {
-        (async () => {
-            const temp: Record<string, string> = await GetImageData();
-            this.images = new Map(Object.entries(temp));
-        })();
+	readonly searchBar = document.getElementById("search-bar") as HTMLInputElement;
 
-        if (max < 4) {
-            max = 4;
-        }
+	readonly rightSection = document.getElementById("right-section") as HTMLDivElement;
 
-        for (let index = 0; index < max; index++) {
-            this.components.push(new Component(index));
-        }
-    }
+	readonly rightIcon = document.getElementById("right-icon") as HTMLImageElement;
 
-    /**
-     * gets an array of all currently displayed components
-     * 
-     * @returns an array of all indexes of all shown components
-     */
-    getDisplayedComps(): Array<number> {
-        const output: Array<number> = [];
+	components: Array<Component> = [];
 
-        this.components.forEach(comp => {
-            if (comp.self.classList.contains("show")) {
-                output.push(comp.getIndex());
-            }
-        });
+	images: Map<string, string> = new Map();
 
-        return output;
-    }
+	constructor(max: number) {
+		(async () => {
+			const temp: Record<string, string> = await GetImageData();
+			this.images = new Map(Object.entries(temp));
+		})();
 
-    /**
-     * Gets the index added to the id of the highlighted component. If there is none this sets it to be the first visible one.
-     * 
-     * @returns index of the highlighted component
-     */
-    getHighlightedComp(): number {
-        for (let index = 0; index < this.components.length; index++) {
-            if (this.components[index].self.classList.contains("highlighted")) {
-                return index;
-            }
-            
-        }
+		if (max < 4) {
+			max = 4;
+		}
 
-        // if we didn't find a highlightedComp we reset it back to the first comp
-        this.components[0].self.classList.add("highlighted");
-        return 0;
-    }
+		for (let index = 0; index < max; index++) {
+			this.components.push(new Component(index));
+		}
+	}
 
-    /**
-     * Resets the UI of the application to the original starting point
-     */
-    resetUI(): void {
-        this.leftIcon.src = this.images.get("magnifying_glass") as string;
-        this.searchBar.value = "";
-        this.rightSection.classList.remove("loading-grid");
-        this.rightIcon.src = "";
-        this.rightIcon.classList.add("hide");
+	/**
+	 * gets an array of all currently displayed components
+	 * 
+	 * @returns an array of all indexes of all shown components
+	 */
+	getDisplayedComps(): Array<number> {
+		const output: Array<number> = [];
 
-        this.displayComponents(undefined, Array.from({length: 8}, (_, i) => i));
-    }
+		this.components.forEach(comp => {
+			if (comp.self.classList.contains("show")) {
+				output.push(comp.getIndex());
+			}
+		});
 
-    /**
-     * Displays/hides the provided components, all other components stay unchanged.
-     * 
-     * @param showComps which components to change the state to be shown
-     * 
-     * @param hideComps which components to change the state to be hidden
-     */
-    displayComponents(showComps: Array<number> = [], hideComps: Array<number> = []): void {
-        showComps.forEach(index => {
-            this.components[index].self.classList.remove("hide");
-            this.components[index].self.classList.add("show");
-        });
+		return output;
+	}
 
-        hideComps.forEach(index => {
-            this.components[index].self.classList.remove("show");
-            this.components[index].self.classList.add("hide");
-        });
-    }
+	/**
+	 * Gets the index added to the id of the highlighted component. If there is none this sets it to be the first visible one.
+	 * 
+	 * @returns index of the highlighted component
+	 */
+	getHighlightedComp(): number {
+		for (let index = 0; index < this.components.length; index++) {
+			if (this.components[index].self.classList.contains("highlighted")) {
+				return index;
+			}
 
-    /**
-     * Updates the higlighted componented by 1 in either direction (with overflow) or resets back to the first dispalyed comp.
-     *
-     * @param increase if the index of the highligthed comp is supposed to increase
-     * 
-     * @param reset resets back to the first displayed component
-     */
-    updateHighlightedComp(increase?: boolean, reset: boolean = false): void {
-        const displayedComps = this.getDisplayedComps();
-        const highlightedComp = this.getHighlightedComp();
+		}
 
-        if (displayedComps.length == 0) {
-            return;
-        }
+		// if we didn't find a highlightedComp we reset it back to the first comp
+		this.components[0].self.classList.add("highlighted");
+		return 0;
+	}
 
-        if (reset || displayedComps.length == 1 || displayedComps.indexOf(highlightedComp) < 0) {
-            this.components[highlightedComp].self.classList.remove("highlighted");
-            this.components[displayedComps[0]].self.classList.add("highlighted");
-            return;
-        }
+	/**
+	 * Resets the UI of the application to the original starting point
+	 */
+	resetUI(): void {
+		this.leftIcon.src = this.images.get("magnifying_glass") as string;
+		this.searchBar.value = "";
+		this.rightSection.classList.remove("loading-grid");
+		this.rightIcon.src = "";
+		this.rightIcon.classList.add("hide");
 
-        this.components[highlightedComp].self.classList.remove("highlighted");
-        const current = displayedComps.indexOf(highlightedComp) as number;
+		this.displayComponents(undefined, Array.from({ length: 8 }, (_, i) => i));
+	}
 
-        if (increase) {
-            this.components[displayedComps[current+1 <= displayedComps.length-1 ? current+1 : 0]].self.classList.add("highlighted");
-        } else {
-            this.components[displayedComps[current-1 >= 0 ? current-1 : displayedComps.length-1]].self.classList.add("highlighted");
-        }
-    }
+	/**
+	 * Displays/hides the provided components, all other components stay unchanged.
+	 * 
+	 * @param showComps which components to change the state to be shown
+	 * 
+	 * @param hideComps which components to change the state to be hidden
+	 */
+	displayComponents(showComps: Array<number> = [], hideComps: Array<number> = []): void {
+		showComps.forEach(index => {
+			this.components[index].self.classList.remove("hide");
+			this.components[index].self.classList.add("show");
+		});
+
+		hideComps.forEach(index => {
+			this.components[index].self.classList.remove("show");
+			this.components[index].self.classList.add("hide");
+		});
+	}
+
+	/**
+	 * Updates the higlighted componented by 1 in either direction (with overflow) or resets back to the first dispalyed comp.
+	 *
+	 * @param increase if the index of the highligthed comp is supposed to increase
+	 * 
+	 * @param reset resets back to the first displayed component
+	 */
+	updateHighlightedComp(increase?: boolean, reset: boolean = false): void {
+		const displayedComps = this.getDisplayedComps();
+		const highlightedComp = this.getHighlightedComp();
+
+		if (displayedComps.length == 0) {
+			return;
+		}
+
+		if (reset || displayedComps.length == 1 || displayedComps.indexOf(highlightedComp) < 0) {
+			this.components[highlightedComp].self.classList.remove("highlighted");
+			this.components[displayedComps[0]].self.classList.add("highlighted");
+			return;
+		}
+
+		this.components[highlightedComp].self.classList.remove("highlighted");
+		const current = displayedComps.indexOf(highlightedComp) as number;
+
+		if (increase) {
+			this.components[displayedComps[current + 1 <= displayedComps.length - 1 ? current + 1 : 0]].self.classList.add("highlighted");
+		} else {
+			this.components[displayedComps[current - 1 >= 0 ? current - 1 : displayedComps.length - 1]].self.classList.add("highlighted");
+		}
+	}
 }
+
+export { Component, UIHandler };

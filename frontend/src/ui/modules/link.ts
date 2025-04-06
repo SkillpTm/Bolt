@@ -1,5 +1,3 @@
-export { LinkModule }
-
 import { UIHandler } from "../uihandler";
 
 /**
@@ -12,35 +10,38 @@ import { UIHandler } from "../uihandler";
  * @param uiHandler the main uiHandler used throught the app
  */
 class LinkModule {
-    readonly isWebsite = /^(https?:\/\/)?((?![-])[a-z0-9-]+\.)+[a-z]+(\/?)/i;
+	readonly isWebsite = /^(https?:\/\/)?((?![-])[a-z0-9-]+\.)+[a-z]+(\/?)/i;
 
-    #linkComp: number;
-    uiHandler!: UIHandler;
+	#linkComp: number;
 
-    constructor(uiHandler: UIHandler, compIndex: number) {
-        this.uiHandler = uiHandler;
-        this.#linkComp = compIndex;
-    }
+	uiHandler!: UIHandler;
 
-    /**
-     * Checks if the new input is a link/domain and shows the component, if it is
-     */
-    newInput(): void {
-        if (this.isWebsite.test(this.uiHandler.searchBar.value.trim())) {
-            this.showComp();
-        }
-    }
+	constructor(uiHandler: UIHandler, compIndex: number) {
+		this.uiHandler = uiHandler;
+		this.#linkComp = compIndex;
+	}
 
-    /**
-     * modifies the #linkComp to show the suggestion to open the link/domain in the browser
-     */
-    showComp(): void {
-        this.uiHandler.components[this.#linkComp].image.src = this.uiHandler.images.get("file") as string;
-        this.uiHandler.components[this.#linkComp].tooltip.textContent = this.uiHandler.searchBar.value;
-        this.uiHandler.components[this.#linkComp].name.textContent = this.uiHandler.searchBar.value;
-        this.uiHandler.components[this.#linkComp].value.textContent = "Open link in browser";
-        this.uiHandler.components[this.#linkComp].value.classList.add("browserInteract")
+	/**
+	 * Checks if the new input is a link/domain and shows the component, if it is
+	 */
+	newInput(): void {
+		if (this.isWebsite.test(this.uiHandler.searchBar.value.trim())) {
+			this.showComp();
+		}
+	}
 
-        this.uiHandler.displayComponents([this.#linkComp]);
-    }
+	/**
+	 * modifies the #linkComp to show the suggestion to open the link/domain in the browser
+	 */
+	showComp(): void {
+		this.uiHandler.components[this.#linkComp].image.src = this.uiHandler.images.get("file") as string;
+		this.uiHandler.components[this.#linkComp].tooltip.textContent = this.uiHandler.searchBar.value;
+		this.uiHandler.components[this.#linkComp].name.textContent = this.uiHandler.searchBar.value;
+		this.uiHandler.components[this.#linkComp].value.textContent = "Open link in browser";
+		this.uiHandler.components[this.#linkComp].value.classList.add("browserInteract");
+
+		this.uiHandler.displayComponents([this.#linkComp]);
+	}
 }
+
+export { LinkModule };

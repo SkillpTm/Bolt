@@ -1,26 +1,29 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "typeRoots": ["./node_modules/@types", "./types"],
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": [
-      "ESNext",
-      "DOM"
-    ],
-    "moduleResolution": "Node",
-    "strict": true,
-    "sourceMap": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "noEmit": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "skipLibCheck": true
-  },
-  "include": [
-    "src"
-  ]
+	"compilerOptions": {
+		"target": "ESNext",
+		"typeRoots": [
+			"./node_modules/@types",
+			"./types"
+		],
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"lib": [
+			"ESNext",
+			"DOM"
+		],
+		"moduleResolution": "Node",
+		"strict": true,
+		"sourceMap": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"noEmit": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"skipLibCheck": true
+	},
+	"include": [
+		"src"
+	]
 }

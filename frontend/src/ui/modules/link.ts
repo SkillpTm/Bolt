@@ -1,4 +1,5 @@
 import { UIHandler } from "../uihandler";
+import { tlds } from "../../../res/tlds";
 
 /**
  * LinkModule is in charge of detection links and showing it's module
@@ -14,19 +15,31 @@ class LinkModule {
 
 	#linkComp: number;
 
+	#tlds: Map<string, boolean> = new Map;
+
 	uiHandler!: UIHandler;
 
 	constructor(uiHandler: UIHandler, compIndex: number) {
 		this.uiHandler = uiHandler;
 		this.#linkComp = compIndex;
+		tlds.forEach(tld => {
+			this.#tlds.set(tld.toLowerCase(), true);
+		});
 	}
 
 	/**
 	 * Checks if the new input is a link/domain and shows the component, if it is
 	 */
 	newInput(): void {
-		if (this.isWebsite.test(this.uiHandler.searchBar.value.trim())) {
-			this.showComp();
+		let input = this.uiHandler.searchBar.value.trim().toLowerCase();
+
+		if (this.isWebsite.test(input)) {
+			const urlString = input.startsWith("http") ? input : `https://${input}`;
+			const parts = new URL(urlString).hostname.split(".");
+			const tld = parts[parts.length - 1];
+			if (this.#tlds.has(tld)) {
+				this.showComp();
+			}
 		}
 	}
 

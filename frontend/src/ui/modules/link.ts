@@ -65,6 +65,10 @@ class LinkModule {
 	 */
 	isBang(): boolean {
 		let input = this.uiHandler.searchBar.value.trim().toLowerCase();
+		if (!input.includes("!")) {
+			return false;
+		}
+
 		const bangParts = input.split("!");
 		const startBang = bangParts[1].split(" ")[0].toLowerCase();  // for start bangs we assume the input starts with an !, so we need to cut the first empty element
 		const endBang = bangParts[bangParts.length - 1].toLowerCase();

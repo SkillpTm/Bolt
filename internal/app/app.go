@@ -36,7 +36,7 @@ func NewApp(lg *logger.Logger, images embed.FS, icon embed.FS) (*App, error) {
 		return nil, fmt.Errorf("NewApp: couldn't create config:\n--> %w", err)
 	}
 
-	lg.ErrorLogPath = conf.Paths["error.log"]
+	lg.ErrorLogPath, lg.HistoryLogPath = conf.Paths["error.log"], conf.Paths["history.log"]
 
 	sh, err := modules.NewSearchHandler(conf)
 	if err != nil {
@@ -143,8 +143,12 @@ func (a *App) LaunchSearch(input string) {
 
 // LogErrorTS will log a message received from TS
 func (a *App) LogErrorTS(message string) {
-	fmt.Println(message)
 	a.lg.Error("%s", message)
+}
+
+// LogEventTS will log an event received from TS
+func (a *App) LogEventTS(event string, message string) {
+	a.lg.History(event, "%s", message)
 }
 
 // OpenFileExplorer allows you to open the file manager at any entry's location and select it (if the file manager is dolphin or nautilus)

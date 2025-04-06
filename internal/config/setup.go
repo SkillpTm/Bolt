@@ -40,6 +40,7 @@ func setup() ([]string, error) {
 		fmt.Sprintf("%s/Bolt/extended_cache.json", cacheDir),
 		fmt.Sprintf("%s/Bolt/config.json", configDir),
 		fmt.Sprintf("%s/.local/share/Bolt/error.log", homeDir),
+		fmt.Sprintf("%s/.local/share/Bolt/history.log", homeDir),
 	}
 
 	err = validateFiles(files)

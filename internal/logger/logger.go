@@ -10,7 +10,17 @@ import (
 
 // Logger carries the functions to write to the log file
 type Logger struct {
-	ErrorLogPath string
+	ErrorLogPath   string
+	HistoryLogPath string
+}
+
+// History writes an event to the history.log file
+func (l *Logger) History(event string, format string, args ...any) {
+	file, err := os.OpenFile(l.HistoryLogPath, os.O_WRONLY|os.O_APPEND, 0644)
+	if err == nil {
+		defer file.Close()
+		writeToFile(file, event, fmt.Sprintf(format, args...))
+	}
 }
 
 // Error writes an error to the error.log file

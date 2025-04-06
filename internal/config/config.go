@@ -42,7 +42,7 @@ func NewConfig() (*Config, error) {
 
 	newConfig.Paths["default_cache.json"], newConfig.Paths["extended_cache.json"] = files[0], files[1]
 	newConfig.Paths["config.json"] = files[2]
-	newConfig.Paths["error.log"] = files[3]
+	newConfig.Paths["error.log"], newConfig.Paths["history.log"] = files[3], files[4]
 
 	err = util.GetJSON(newConfig.Paths["config.json"], &newConfig)
 	if err != nil {

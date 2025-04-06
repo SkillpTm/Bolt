@@ -1,4 +1,4 @@
-import { HideWindow, OpenFileExplorer } from "../../wailsjs/go/app/App";
+import { HideWindow, LogEventTS, OpenFileExplorer } from "../../wailsjs/go/app/App";
 import { BrowserOpenURL, WindowSetSize } from "../../wailsjs/runtime/runtime";
 
 import { Component, UIHandler } from "../ui/uihandler";
@@ -84,10 +84,15 @@ class StateHandler {
 			currentComp = this.uiHandler.components[this.uiHandler.getHighlightedComp()];
 		}
 
-		if (this.linkModule.isBang() || this.linkModule.isWebiste()) {
+		if (this.linkModule.isBang()) {
 			BrowserOpenURL((currentComp.tooltip.textContent as string).trim());
-		} else if (this.searchMode.results.length > 0) {
+			LogEventTS("Bang", this.uiHandler.searchBar.value.trim());
+		} else if (this.linkModule.isWebiste()) {
+			BrowserOpenURL((currentComp.tooltip.textContent as string).trim());
+			LogEventTS("Url", currentComp.tooltip.textContent as string);
+		} else {
 			await OpenFileExplorer(currentComp.tooltip.textContent as string);
+			LogEventTS("Search", `${this.uiHandler.searchBar.value.trim()}" - "${currentComp.tooltip.textContent}`);
 		}
 
 		this.reset();

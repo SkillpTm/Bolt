@@ -1,1 +1,2 @@
 *.js linguist-detectable=false
+frontend/res/* linguist-detectable=false

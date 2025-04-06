@@ -84,8 +84,8 @@ class StateHandler {
 			currentComp = this.uiHandler.components[this.uiHandler.getHighlightedComp()];
 		}
 
-		if (this.linkModule.isWebsite.test(this.uiHandler.searchBar.value.trim())) {
-			BrowserOpenURL(this.uiHandler.searchBar.value.trim());
+		if (this.linkModule.isBang() || this.linkModule.isWebiste()) {
+			BrowserOpenURL((currentComp.tooltip.textContent as string).trim());
 		} else if (this.searchMode.results.length > 0) {
 			await OpenFileExplorer(currentComp.tooltip.textContent as string);
 		}

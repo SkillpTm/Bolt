@@ -1,10 +1,8 @@
 *.code-workspace
 *.md5
 
-go.work
-
 build/darwin
 build/windows
-node_modules
 frontend/dist
+frontend/node_modules
 frontend/wailsjs

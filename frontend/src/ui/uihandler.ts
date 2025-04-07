@@ -191,7 +191,7 @@ class UIHandler {
 	 * Resets the UI of the application to the original starting point
 	 */
 	resetUI(): void {
-		this.leftIcon.src = this.images.get("magnifying_glass") as string;
+		this.leftIcon.src = this.images.get("bolt") as string;
 		this.searchBar.value = "";
 		this.rightSection.classList.remove("loading-grid");
 		this.rightIcon.src = "";

@@ -80,16 +80,17 @@ func (a *App) Startup(CTX context.Context) {
 // GetImageData emits a map[name]base64 png data to the frotend to bind in the images
 func (a *App) GetImageData() map[string]string {
 	imageData := map[string]string{
-		"cross":            "frontend/src/assets/images/cross.png",
-		"google":           "frontend/src/assets/images/google.png",
-		"file":             "frontend/src/assets/images/file.png",
-		"folder":           "frontend/src/assets/images/folder.png",
-		"left":             "frontend/src/assets/images/left.png",
-		"magnifying_glass": "frontend/src/assets/images/magnifying_glass.png",
-		"not-left":         "frontend/src/assets/images/not_left.png",
-		"right":            "frontend/src/assets/images/right.png",
-		"not-right":        "frontend/src/assets/images/not_right.png",
-		"tick":             "frontend/src/assets/images/tick.png",
+		"bang":      "frontend/src/assets/images/bang.svg",
+		"bolt":      "frontend/src/assets/images/bolt.png",
+		"cross":     "frontend/src/assets/images/cross.png",
+		"file":      "frontend/src/assets/images/file.png",
+		"folder":    "frontend/src/assets/images/folder.png",
+		"left":      "frontend/src/assets/images/left.png",
+		"link":      "frontend/src/assets/images/link.png",
+		"not-left":  "frontend/src/assets/images/notLeft.png",
+		"not-right": "frontend/src/assets/images/notRight.png",
+		"right":     "frontend/src/assets/images/right.png",
+		"tick":      "frontend/src/assets/images/tick.png",
 	}
 
 	for name, path := range imageData {
@@ -98,7 +99,11 @@ func (a *App) GetImageData() map[string]string {
 			return map[string]string{}
 		}
 
-		imageData[name] = fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(imageBytes))
+		if strings.HasSuffix(path, ".svg") {
+			imageData[name] = fmt.Sprintf("data:image/svg+xml;base64,%s", base64.StdEncoding.EncodeToString(imageBytes))
+		} else if strings.HasSuffix(path, ".png") {
+			imageData[name] = fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(imageBytes))
+		}
 	}
 
 	return imageData

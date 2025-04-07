@@ -51,12 +51,12 @@ class LinkModule {
 				bangInput = startBang;
 			}
 
-			this.showComp(this.bangsMap.get(bangInput)![1].replace("{{{s}}}", encodeURIComponent(input.replace(`!${bangInput}`, ""))), `Search with ${this.bangsMap.get(bangInput)![0]}`);
+			this.showComp(this.uiHandler.images.get("bang") as string, this.bangsMap.get(bangInput)![1].replace("{{{s}}}".trim(), encodeURIComponent(input.replace(`!${bangInput}`, "")).trim()), `Search with ${this.bangsMap.get(bangInput)![0]}`);
 			return;
 		}
 
 		if (this.isWebiste()) {
-			this.showComp(this.uiHandler.searchBar.value, "Open link in browser");
+			this.showComp(this.uiHandler.images.get("link") as string, this.uiHandler.searchBar.value, "Open link in browser");
 		}
 	}
 
@@ -101,8 +101,8 @@ class LinkModule {
 	/**
 	 * modifies the #linkComp to show the suggestion to open the link/domain/bang in the browser
 	 */
-	showComp(tooltip: string, value: string): void {
-		this.uiHandler.components[this.#linkComp].image.src = this.uiHandler.images.get("file") as string;
+	showComp(imageSrc: string, tooltip: string, value: string): void {
+		this.uiHandler.components[this.#linkComp].image.src = imageSrc;
 		this.uiHandler.components[this.#linkComp].tooltip.textContent = tooltip;
 		this.uiHandler.components[this.#linkComp].name.textContent = this.uiHandler.searchBar.value;
 		this.uiHandler.components[this.#linkComp].value.textContent = value;

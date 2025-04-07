@@ -22,9 +22,11 @@
 
 /* the component image takes 44x40 */
 .compImg {
-	margin: 4px;
-	margin-right: 6px;
-	margin-left: 6px;
+	/* width: 32;
+	height: 32; */
+	margin: 6px;
+	margin-right: 8px;
+	margin-left: 8px;
 }
 
 /* the component text takes 525x40 */

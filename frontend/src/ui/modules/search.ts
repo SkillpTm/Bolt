@@ -179,7 +179,7 @@ class SearchModule {
 			if (left) {
 				this.uiHandler.leftIcon.classList.remove("icon-clickable");
 
-				this.uiHandler.leftIcon.src = this.uiHandler.images.get("magnifying_glass") as string;
+				this.uiHandler.leftIcon.src = this.uiHandler.images.get("bolt") as string;
 			} else {
 				this.uiHandler.rightIcon.classList.remove("icon-clickable");
 
@@ -201,7 +201,7 @@ class SearchModule {
 			} else {
 				this.uiHandler.rightIcon.classList.add("icon-clickable");
 
-				if (this.#resultPage * this.#maxDisplayedResults + this.uiHandler.getDisplayedComps().length < (this.results.length - 1)) {
+				if (this.#resultPage * this.#maxDisplayedResults + this.uiHandler.getDisplayedComps().length < this.results.length) {
 					this.uiHandler.rightIcon.src = this.uiHandler.images.get("right") as string;
 				} else {
 					this.uiHandler.rightIcon.src = this.uiHandler.images.get("not-right") as string;

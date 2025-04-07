@@ -1,4 +1,5 @@
 import { LaunchSearch } from "../../../wailsjs/go/app/App";
+import { WindowSetSize } from "../../../wailsjs/runtime/runtime";
 
 import { Component, UIHandler } from "../uihandler";
 
@@ -142,6 +143,7 @@ class SearchModule {
 		// the 2nd input produces an array with all values between 1-7 that aren't in displayComps
 		this.uiHandler.displayComponents(displayComps, Array.from({ length: 6 }, (_, i) => i + 1).filter(item => !displayComps.includes(item)));
 		this.uiHandler.updateHighlightedComp(undefined, true);
+		WindowSetSize(570, this.uiHandler.topBarHeight + this.uiHandler.getDisplayedComps().length * this.uiHandler.componentHeight);
 	}
 
 	/**

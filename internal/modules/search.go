@@ -80,12 +80,16 @@ func (sh *SearchHandler) ForceUpdateCache(conf *config.Config, extended bool, re
 
 // ImportCache imports the cache data from the disk into memory
 func (sh *SearchHandler) ImportCache() {
+	sh.fileSystem.DefaultDirs.Mu.Lock()
 	util.GetJSON(sh.fileSystem.DefaultDirs.CachePath, &sh.fileSystem.DefaultDirs)
+	sh.fileSystem.DefaultDirs.Mu.Unlock()
 	sh.fileSystem.DefaultDirs.Imported = true
 
 	// in a goroutine to speed up start up time
 	go func() {
+		sh.fileSystem.ExtendedDirs.Mu.Lock()
 		util.GetJSON(sh.fileSystem.ExtendedDirs.CachePath, &sh.fileSystem.ExtendedDirs)
+		sh.fileSystem.ExtendedDirs.Mu.Unlock()
 		sh.fileSystem.ExtendedDirs.Imported = true
 	}()
 }

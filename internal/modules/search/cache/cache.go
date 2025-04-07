@@ -36,12 +36,11 @@ paths: map[unique ID]Absolute Path
 dirMap: map[File Extension]map[File Length][]File{encodedName, Name, pathKey}
 */
 type Dirs struct {
-	mu sync.Mutex `json:"-"`
-
 	BaseDirs  map[string]bool           `json:"-"`
 	CachePath string                    `json:"-"`
 	DirMap    map[string]map[int][]File `json:"d"`
 	Imported  bool                      `json:"-"`
+	Mu        sync.Mutex                `json:"-"`
 	Paths     map[int]string            `json:"p"`
 }
 
@@ -95,12 +94,8 @@ func NewFilesystem(conf *config.Config) (*Filesystem, error) {
 		maxCPUThreads: conf.MaxCPUThreads,
 	}
 
-	start := time.Now()
-
 	fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
 	fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
-
-	fmt.Println(time.Since(start))
 
 	go fs.autoUpdateCache(conf.DefaultDirsCacheUpdateTime, conf.ExtendedDirsCacheUpdateTime)
 
@@ -139,9 +134,9 @@ func (dr *dirsRules) check(dirPath string, add bool, dirs *Dirs) bool {
 		if !add {
 			return
 		}
-		dirs.mu.Lock()
+		dirs.Mu.Lock()
 		dirs.BaseDirs[dirPath] = true
-		dirs.mu.Unlock()
+		dirs.Mu.Unlock()
 	}
 
 	if dr.path[dirPath] {
@@ -172,10 +167,14 @@ func (fs *Filesystem) autoUpdateCache(defaultTime int, extendedTime int) {
 	for {
 		select {
 		case <-defaultTimer.C:
+			fs.DefaultDirs.Mu.Lock()
 			fs.Update(&fs.DefaultDirs, &fs.ExtendedDirs)
+			fs.DefaultDirs.Mu.Unlock()
 			defaultTimer.Reset(time.Duration(defaultTime) * time.Second)
 		case <-extendedTimer.C:
+			fs.ExtendedDirs.Mu.Lock()
 			fs.Update(&fs.ExtendedDirs, &fs.DefaultDirs)
+			fs.ExtendedDirs.Mu.Unlock()
 			extendedTimer.Reset(time.Duration(extendedTime) * time.Second)
 		}
 	}
@@ -207,12 +206,12 @@ func (fs *Filesystem) traverse(pathQueue chan string, results chan<- basicFile, 
 					continue
 				}
 
-				otherDirs.mu.Lock()
+				otherDirs.Mu.Lock()
 				if _, ok := otherDirs.BaseDirs[entryPath]; ok {
-					otherDirs.mu.Unlock()
+					otherDirs.Mu.Unlock()
 					continue
 				}
-				otherDirs.mu.Unlock()
+				otherDirs.Mu.Unlock()
 
 				results <- basicFile{"folder", true, entry.Name(), entryPath}
 				wg.Add(1)

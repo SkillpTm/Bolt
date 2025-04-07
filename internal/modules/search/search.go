@@ -45,7 +45,7 @@ func newSearchString(searchInput string, fileExtensions []string) *searchString 
 }
 
 // Start wraps around searchFS and then also sorts and ranks the results. The forceStopChan can search it to end it's search early. This will make it yield no results.
-func Start(searchInput string, fileExtensions []string, extendedSearch bool, fs *cache.Filesystem, forceStopChan chan bool) []string {
+func Start(searchInput string, fs *cache.Filesystem, forceStopChan chan bool, literalSearch bool, extendedSearch bool, fileExtensions []string) []string {
 	if len(searchInput) < 1 {
 		return []string{}
 	}
@@ -57,11 +57,11 @@ func Start(searchInput string, fileExtensions []string, extendedSearch bool, fs 
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go pattern.searchFS(&fs.DefaultDirs, foundFilesChan, forceStopChan, &wg)
+	go pattern.searchFS(literalSearch, &fs.DefaultDirs, foundFilesChan, forceStopChan, &wg)
 
 	if extendedSearch {
 		wg.Add(1)
-		go pattern.searchFS(&fs.ExtendedDirs, foundFilesChan, forceStopChan, &wg)
+		go pattern.searchFS(literalSearch, &fs.ExtendedDirs, foundFilesChan, forceStopChan, &wg)
 	}
 
 	go func() {
@@ -104,7 +104,7 @@ func Start(searchInput string, fileExtensions []string, extendedSearch bool, fs 
 }
 
 // searchFS searches one of the provided FileSystem maps, while skiping files for wrong extensions and ecoded values
-func (sStr *searchString) searchFS(dirs *cache.Dirs, foundFilesChan chan<- *[]string, forceStopChan chan bool, wg *sync.WaitGroup) {
+func (sStr *searchString) searchFS(literalSearch bool, dirs *cache.Dirs, foundFilesChan chan<- *[]string, forceStopChan chan bool, wg *sync.WaitGroup) {
 	defer wg.Done()
 	extensionsToCheck := []string{}
 
@@ -120,6 +120,10 @@ func (sStr *searchString) searchFS(dirs *cache.Dirs, foundFilesChan chan<- *[]st
 
 	for _, extension := range extensionsToCheck {
 		for length, files := range dirs.DirMap[extension] {
+			if literalSearch && length != len(sStr.name) {
+				continue
+			}
+
 			if length < len(sStr.name) {
 				continue
 			}

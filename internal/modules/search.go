@@ -103,7 +103,7 @@ func (sh *SearchHandler) Search(input string) {
 
 	// set a new forceStopChan everytime, to stop confusion on what search to break
 	sh.forceStopChan = make(chan bool, 1)
-	searchString, fileExtensions, extendedSearch := matchFlags(input)
+	searchString, extendedSearch, literalSearch, fileExtensions := matchFlags(input)
 	sh.searching = true
 
 	// Importing the extended dirs is done over a goroutine, which might not have finished here. So we wait for it and break early with the forceStopChan, if needed
@@ -117,7 +117,7 @@ func (sh *SearchHandler) Search(input string) {
 		}
 	}
 
-	result := search.Start(searchString, fileExtensions, extendedSearch, sh.fileSystem, sh.forceStopChan)
+	result := search.Start(searchString, sh.fileSystem, sh.forceStopChan, literalSearch, extendedSearch, fileExtensions)
 
 	// we only want to emit the results, if we got any and we have a search String to avoid updating to no results in the middle of typing
 	if len(searchString) > 0 {
@@ -130,35 +130,41 @@ matchFlags cleans the input and returns the flag values in it, it also removes l
 
 The flags it matches for are:
 
+"search term": which tells us the search is a literal search, so we'll only return exact matches
 /e and /E: which tell us if the search is an extended search
 <file extensions>: which tells us the file extensions. The separator for extensions is a ','
 
 Example:
 
-input: "myFile /e <txt, go>" -> output: "myfile", ["txt", "go"], true
+input: "myFile /e <txt, go>" -> output: "myfile", ["txt", "go"], true, false
 */
-func matchFlags(input string) (string, []string, bool) {
+func matchFlags(input string) (string, bool, bool, []string) {
 	input = strings.ToLower(input)
+	literalSearch := false
 	extendedSearch := false
 	extensions := []string{}
 
-	// the pattern detects: /e and /E for the extended search flag
+	notInLiteral := func(pattern string) bool {
+		return len(regexp.MustCompile(fmt.Sprintf("\".*(%s).*\"", pattern)).FindAllString(input, -1)) == 0
+	}
+
+	// the pattern detects: /e for the extended search flag
 	pattern := "/e"
 
 	regex := regexp.MustCompile(pattern)
 
-	if len(regex.FindAllString(input, 1)) > 0 {
+	if len(regex.FindAllString(input, 1)) > 0 && notInLiteral(pattern) {
 		extendedSearch = true
-	}
 
-	input = regex.ReplaceAllString(input, "")
+		input = regex.ReplaceAllString(input, "")
+	}
 
 	// the pattern detects: anything between (and including) < and > for the extensions
 	pattern = "<[^>]*>"
 
 	regex = regexp.MustCompile(pattern)
 
-	if matches := regex.FindAllString(input, -1); len(matches) > 0 {
+	if matches := regex.FindAllString(input, -1); len(matches) > 0 && notInLiteral(pattern) {
 		for _, match := range matches {
 			for _, char := range []string{"<", ">", " "} {
 				match = strings.ReplaceAll(match, char, "")
@@ -166,17 +172,22 @@ func matchFlags(input string) (string, []string, bool) {
 
 			extensions = append(extensions, strings.Split(match, ",")...)
 		}
-	}
 
-	input = regex.ReplaceAllString(input, "")
+		input = regex.ReplaceAllString(input, "")
+	}
 
 	// remove any lone flag characters from the search
 	input = strings.Trim(input, " /<>")
 
-	if index := strings.LastIndex(input, "."); index >= 0 && !slices.Contains(extensions, "folder") {
+	if index := strings.LastIndex(input, "."); index >= 0 && !slices.Contains(extensions, "folder") && notInLiteral("\\.") {
 		extensions = append(extensions, input[index:])
 		input = input[:index]
 	}
 
-	return input, extensions, extendedSearch
+	if strings.HasPrefix(input, "\"") && strings.HasSuffix(input, "\"") && len(input) > 1 {
+		literalSearch = true
+		input = input[1 : len(input)-1]
+	}
+
+	return input, extendedSearch, literalSearch, extensions
 }

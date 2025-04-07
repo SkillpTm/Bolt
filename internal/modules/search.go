@@ -149,7 +149,7 @@ func matchFlags(input string) (string, bool, bool, []string) {
 	}
 
 	// the pattern detects: /e for the extended search flag
-	pattern := "/e"
+	pattern := "(?:^| )/e(?:$| )"
 
 	regex := regexp.MustCompile(pattern)
 

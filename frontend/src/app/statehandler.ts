@@ -86,7 +86,7 @@ class StateHandler {
 
 		if (this.linkModule.isBang()) {
 			BrowserOpenURL((currentComp.tooltip.textContent as string).trim());
-			LogEventTS("Bang", this.uiHandler.searchBar.value.trim());
+			LogEventTS("Bang", `${this.uiHandler.searchBar.value.trim()}" - "${currentComp.tooltip.textContent}`);
 		} else if (this.linkModule.isWebiste()) {
 			BrowserOpenURL((currentComp.tooltip.textContent as string).trim());
 			LogEventTS("Url", currentComp.tooltip.textContent as string);

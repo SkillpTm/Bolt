@@ -16,7 +16,7 @@ var (
 	assets embed.FS
 	//go:embed build/appicon.png
 	icon embed.FS
-	//go:embed frontend/src/assets/images/*
+	//go:embed frontend/assets/images/*
 	images embed.FS
 )
 

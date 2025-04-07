@@ -98,7 +98,7 @@ func resetConfig(configPath string) error {
 
 	defaultConfig := Config{
 		MaxCPUThreadPercentage:      0.25, // percentage of threads that may be used, always rounding the threads up
-		ShortCutEnd:                 "space",
+		ShortcutEnd:                 "space",
 		DefaultDirsCacheUpdateTime:  120,  // in seconds
 		ExtendedDirsCacheUpdateTime: 1800, // in seconds
 		DefaultDirs: []string{

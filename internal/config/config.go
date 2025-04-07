@@ -13,7 +13,7 @@ import (
 // Config is made to structure and order the data for the config.json
 type Config struct {
 	MaxCPUThreadPercentage      float64  `json:"MaxCPUThreadPercentage"`
-	ShortCutEnd                 string   `json:"ShortCutEnd"`
+	ShortcutEnd                 string   `json:"ShortcutEnd"`
 	DefaultDirsCacheUpdateTime  int      `json:"DefaultDirsCacheUpdateTime"`
 	ExtendedDirsCacheUpdateTime int      `json:"ExtendedDirsCacheUpdateTime"`
 	DefaultDirs                 []string `json:"DefaultDirs"`

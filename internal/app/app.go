@@ -52,14 +52,14 @@ func NewApp(lg *logger.Logger, images embed.FS, icon embed.FS) (*App, error) {
 		"z": hotkey.KeyZ, " ": hotkey.KeySpace, "space": hotkey.KeySpace,
 	}
 
-	if _, ok := keyMap[strings.ToLower(conf.ShortCutEnd)]; !ok {
+	if _, ok := keyMap[strings.ToLower(conf.ShortcutEnd)]; !ok {
 		return nil, fmt.Errorf("NewApp: invalid hotkey input")
 	}
 
 	return &App{
 		conf:          conf,
 		icon:          icon,
-		hotkey:        keyMap[strings.ToLower(conf.ShortCutEnd)],
+		hotkey:        keyMap[strings.ToLower(conf.ShortcutEnd)],
 		images:        images,
 		lg:            lg,
 		SearchHandler: sh,

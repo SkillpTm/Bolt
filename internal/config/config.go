@@ -2,6 +2,7 @@
 package config
 
 import (
+	"embed"
 	"fmt"
 	"math"
 	"runtime"
@@ -32,10 +33,10 @@ type Rules struct {
 }
 
 // NewConfig is the constructor for Config, it imports the data from the config.json
-func NewConfig() (*Config, error) {
+func NewConfig(icon embed.FS) (*Config, error) {
 	newConfig := Config{Paths: make(map[string]string)}
 
-	files, err := setup()
+	files, err := setup(icon)
 	if err != nil {
 		return nil, fmt.Errorf("NewConfig: couldn't setup folders:\n--> %w", err)
 	}

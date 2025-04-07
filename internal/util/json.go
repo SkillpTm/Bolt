@@ -32,7 +32,7 @@ func GetJSON(filePath string, dataCarrier any) error {
 
 // OverwriteJSON will take a map or struct with JSON data and the file path and overwrite the data in the existing file
 func OverwriteJSON(filePath string, indent bool, data any) error {
-	jsonFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	jsonFile, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("OverwriteJSON: couldn't open JSON file %s:\n--> %w", filePath, err)
 	}

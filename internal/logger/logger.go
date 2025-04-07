@@ -47,7 +47,7 @@ func (l *Logger) Fatal(format string, args ...any) {
 func (l *Logger) Panic(format string, args ...any) {
 	homeDir, err := os.UserHomeDir()
 	if err == nil {
-		file, err := os.OpenFile(fmt.Sprintf("%s/.local/share/Bolt/error.log", homeDir), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		file, err := os.OpenFile(fmt.Sprintf("%s/.local/share/bolt/error.log", homeDir), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err == nil {
 			defer file.Close()
 			writeToFile(file, "PANIC", fmt.Sprintf(format, args...))

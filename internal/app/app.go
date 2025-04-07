@@ -31,7 +31,7 @@ type App struct {
 
 // NewApp is the constructor for App
 func NewApp(lg *logger.Logger, images embed.FS, icon embed.FS) (*App, error) {
-	conf, err := config.NewConfig()
+	conf, err := config.NewConfig(icon)
 	if err != nil {
 		return nil, fmt.Errorf("NewApp: couldn't create config:\n--> %w", err)
 	}

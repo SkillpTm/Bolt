@@ -32,13 +32,13 @@ document.addEventListener("keydown", async (event) => {
 	} else if (event.ctrlKey && event.key === "ArrowDown") {
 		event.preventDefault();
 		stateHandler.searchMode.updatePage(1);
-	} else if (event.key === "ArrowUp") {
+	} else if (event.key === "ArrowUp" && stateHandler.uiHandler.getDisplayedComps().length > 0) {
 		event.preventDefault();
 		stateHandler.uiHandler.updateHighlightedComp(false);
-	} else if (event.key === "ArrowDown") {
+	} else if (event.key === "ArrowDown" && stateHandler.uiHandler.getDisplayedComps().length > 0) {
 		event.preventDefault();
 		stateHandler.uiHandler.updateHighlightedComp(true);
-	} else if (event.key === "Enter") {
+	} else if (event.key === "Enter" && stateHandler.uiHandler.getDisplayedComps().length > 0) {
 		await stateHandler.routeAction();
 	}
 });

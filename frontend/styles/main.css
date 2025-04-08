@@ -8,12 +8,19 @@
 	--blue: rgb(40, 153, 255);
 }
 
+@font-face {
+	font-family: "RobotoMono";
+	src: url("/assets/fonts/RobotoMono-VariableFont_wght.ttf") format("truetype");
+	font-weight: normal;
+	font-style: normal;
+}
+
 body {
 	margin: 0px;
 
 	user-select: none;
 
-	font-family: Arial, sans-serif;
+	font-family: "RobotoMono", sans-serif;
 	background-color: var(--dark-gray);
 }
 
@@ -67,6 +74,8 @@ body {
 	font-size: 16px;
 	color: var(--light-gray);
 	background-color: var(--dark-gray);
+
+	font-family: "RobotoMono", sans-serif;
 }
 
 #search-bar::placeholder {
